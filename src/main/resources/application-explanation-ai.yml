@@ -1,0 +1,30 @@
+# 讲解文档AI生成相关配置
+nexus:
+  explanation:
+    ai:
+      # 知识点生成批次大小
+      batch-size: 2
+      # 最大并发请求数
+      max-concurrent: 5
+      # 单个请求超时时间（秒）
+      timeout-seconds: 30
+      # 重试次数
+      retry-count: 3
+      # 重试延迟（毫秒）
+      retry-delay-ms: 1000
+      
+      # 模型配置
+      model:
+        # 结构化输出模型
+        structured-output: "qwen-max"
+        # 内容生成模型
+        content-generation: "qwen-max"
+      
+      # 生成策略配置
+      generation:
+        # 是否启用并发生成
+        concurrent-enabled: true
+        # 是否启用容错机制
+        fault-tolerance-enabled: true
+        # 是否启用去重处理
+        deduplication-enabled: true

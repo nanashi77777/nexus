@@ -1,0 +1,6 @@
+# 雪花算法配置
+snowflake:
+  # 数据中心ID (0-31)
+  datacenter-id: 0
+  # 工作机器ID (0-31)
+  worker-id: 0 

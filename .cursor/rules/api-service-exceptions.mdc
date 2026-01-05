@@ -1,0 +1,85 @@
+# API, 服务层与异常处理规范
+
+## API 设计
+
+- **风格**: 遵循 RESTful 风格，使用正确的HTTP方法。
+- **URL**: ` /api/{version}/{resource-name}`，例如 `/api/v1/users`。
+- **响应**: 所有接口必须返回 `ResultVO` 对象。
+- **请求DTO**: 使用以 `Req` 结尾的 DTO 封装请求体，并使用 `@Valid` 注解进行验证。
+- **用户身份**: **禁止**在Controller方法参数中传递 `userId`。必须在 `AppService` 层通过 `StpUtil.getLoginIdAsLong()` 获取。
+- **参考**: [NEXUS项目API设计与返回结果规范](mdc:doc/NEXUS项目API设计与返回结果规范.md)
+
+```java
+// Controller 示例
+@RestController
+@RequestMapping("/api/v1/users")
+public class UserController {
+    private final UserAppService userAppService;
+
+    // ... (Constructor)
+
+    @PostMapping("/register")
+    public ResultVO<Long> registerUser(@Valid @RequestBody RegisterUserReq request) {
+        Long userId = userAppService.registerUser(request);
+        return ResultVO.success(userId);
+    }
+}
+```
+
+## 服务层 (AppService) 实现
+
+- **注解**: 使用 `@Service`, `@RequiredArgsConstructor`, `@Slf4j`。
+- **事务**: 在写操作方法上添加 `@Transactional` 注解。
+- **日志**: 记录关键业务流程的开始、结束和异常。
+- **异常**: 只抛出 `ApplicationException`。
+- **职责**:
+    1.  验证业务规则。
+    2.  调用 `Port` (Repository) 接口执行持久化。
+    3.  组合多个 `Port` 完成复杂业务流程。
+    4.  处理基础设施返回的结果，并转换为业务响应。
+
+## 异常处理
+
+- **业务异常**: 使用 `ApplicationException`，并传入定义在 `.../enums/...ErrorCodeEnum.java` 中的业务错误码。
+- **基础设施异常**: 在 `Adapter` 层将技术异常（如 `SQLException`）包装成 `InfrastructureException` 抛出。
+- **异常转换**: `Adapter` 层负责将技术细节的 `InfrastructureException` 转换为对业务有意义的 `ApplicationException`。
+- **参考**: [NEXUS项目异常处理规范](mdc:doc/NEXUS项目异常处理规范.md)
+
+```java
+// AppService 异常处理示例
+@Service
+@RequiredArgsConstructor
+public class UserAppServiceImpl implements UserAppService {
+
+    private final UserPresenceCheckerPort userPresenceCheckerPort;
+
+    @Override
+    public Long registerUser(RegisterUserReq request) {
+        // 业务规则验证 -> 抛出 ApplicationException
+        if (userPresenceCheckerPort.existsByUsername(request.getUsername())) {
+            throw new ApplicationException(UserErrorCodeEnum.USERNAME_EXISTS);
+        }
+        // ...
+    }
+}
+
+// Adapter 异常处理示例
+@Component
+public class UserNotificationAdapter implements UserNotificationPort {
+    private final EmailNotificationService emailService;
+    
+    @Override
+    public void sendWelcomeEmail(String email, String username) {
+        try {
+            emailService.send(email, "Welcome", "templateId", Map.of("username", username));
+        } catch (Exception e) {
+            // 将技术异常包装为 InfrastructureException
+            throw new InfrastructureException(NotificationExceptionCodeEnum.SENDING_ERROR, e);
+        }
+    }
+}
+```
+description:
+globs:
+alwaysApply: false
+---

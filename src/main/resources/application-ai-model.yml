@@ -1,0 +1,33 @@
+langchain4j:
+  community:
+    dashscope:
+      chat-model:
+#        api-key: sk-e9563664c06948e68cd9c9f9fd938eaa
+        api-key: sk-d6cbb97c44ec49e78f3ddf0e1133cede
+  pgvector:
+    # 共享的数据库连接信息，将从主 application.yml 中读取
+    host: localhost
+    port: 5432
+    database: nexus_v1
+#    username: postgres
+#    password: Lin037...
+    username: nexus
+    password: lpf050713.
+    tables:
+      1024:
+        name: "vector_store_1024"
+        use-index: true
+        index-list-size: 1000
+        create-table: true
+        drop-table-first: false
+      1536:
+        name: "vector_store_1536"
+        use-index: true
+        index-list-size: 1000
+        create-table: true
+        drop-table-first: false
+      2048:
+        name: "vector_store_2048"
+        use-index: false
+        create-table: true
+        drop-table-first: false

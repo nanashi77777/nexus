@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - NEXUS知因</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-brain"></i>
+                    <h1>NEXUS知因</h1>
+                </div>
+                <p class="auth-subtitle">智能学习系统</p>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-account">用户名/邮箱</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="login-account" placeholder="请输入用户名或邮箱" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="请输入密码" required>
+                        <button type="button" class="btn-toggle-password" id="toggle-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember-me">
+                        <span>记住我</span>
+                    </label>
+                    <a href="#" class="forgot-link">忘记密码？</a>
+                </div>
+                <button type="submit" class="btn-auth btn-primary" id="login-submit">
+                    <i class="fas fa-sign-in-alt"></i>
+                    登录
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>或</span>
+            </div>
+
+            <div class="auth-social">
+                <button class="btn-social btn-google">
+                    <i class="fab fa-google"></i>
+                    Google 登录
+                </button>
+                <button class="btn-social btn-github">
+                    <i class="fab fa-github"></i>
+                    GitHub 登录
+                </button>
+            </div>
+
+            <div class="auth-footer">
+                <p>还没有账户？ <a href="/register" class="auth-link">立即注册</a></p>
+                <p class="auth-tips">登录即表示您同意我们的 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a></p>
+            </div>
+        </div>
+
+        <div class="auth-features">
+            <h2>欢迎回到 NEXUS知因</h2>
+            <div class="features-list">
+                <div class="feature-item">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>智能学习空间</h3>
+                    <p>组织和管理您的学习资源，构建个性化知识体系</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <h3>可视化知识图谱</h3>
+                    <p>直观展示知识关联，加深理解和记忆</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-robot"></i>
+                    <h3>AI智能助手</h3>
+                    <p>随时解答问题，提供个性化学习建议</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 切换密码可见性
+            const togglePassword = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('login-password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+
+            // 处理登录表单提交
+            const loginForm = document.getElementById('login-form');
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const account = document.getElementById('login-account').value.trim();
+                const password = document.getElementById('login-password').value.trim();
+                const rememberMe = document.getElementById('remember-me').checked;
+                
+                if (!account || !password) {
+                    showAuthError('请输入用户名和密码');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('login-submit');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+                submitBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/api/v1/user/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            account: account,
+                            password: password
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.code === 200) {
+                        // 登录成功，存储token
+                        if (result.data && result.data.token) {
+                            localStorage.setItem('token', result.data.token);
+                        }
+                        
+                        // 显示成功消息
+                        showAuthSuccess('登录成功，正在跳转...');
+                        
+                        // 跳转到首页
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        showAuthError(result.msg || '登录失败，请检查用户名和密码');
+                    }
+                } catch (error) {
+                    console.error('登录请求失败:', error);
+                    showAuthError('网络错误，请检查网络连接');
+                } finally {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+
+            function showAuthError(message) {
+                // 移除旧的消息
+                const oldError = document.querySelector('.auth-error');
+                if (oldError) oldError.remove();
+                
+                // 创建错误消息元素
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'auth-error';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                `;
+                
+                // 插入到表单前
+                loginForm.parentNode.insertBefore(errorDiv, loginForm);
+                
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 3000);
+            }
+
+            function showAuthSuccess(message) {
+                // 移除旧的消息
+                const oldSuccess = document.querySelector('.auth-success');
+                if (oldSuccess) oldSuccess.remove();
+                
+                // 创建成功消息元素
+                const successDiv = document.createElement('div');
+                successDiv.className = 'auth-success';
+                successDiv.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                `;
+                
+                // 插入到表单前
+                loginForm.parentNode.insertBefore(successDiv, loginForm);
+            }
+
+            // 检查是否已经登录
+            checkLoginStatus();
+        });
+
+        function checkLoginStatus() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // 验证token是否有效
+                fetch('/api/v1/users/query/basic', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // 已经登录，跳转到首页
+                        window.location.href = '/';
+                    }
+                })
+                .catch(() => {
+                    // token无效，清除本地存储
+                    localStorage.removeItem('token');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

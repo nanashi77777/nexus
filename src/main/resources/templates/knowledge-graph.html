@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识图谱 - NEXUS知因</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script th:inline="javascript">
+        const currentUsername = /*[[${#session.getAttribute('username')}]]*/ '用户';
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>NEXUS知因</h1>
+                <span class="tagline">智能学习系统</span>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li data-tab="learning-space"><i class="fas fa-layer-group"></i> 学习空间</li>
+                    <li class="active" data-tab="knowledge-graph"><i class="fas fa-project-diagram"></i> 知识图谱</li>
+                    <li data-tab="agent-chat"><i class="fas fa-robot"></i> 智能体对话</li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <span class="user-name" id="current-username">加载中...</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 知识图谱可视化界面 -->
+            <section id="knowledge-graph" class="tab-content active">
+                <div class="knowledge-graph-header">
+                    <h2><i class="fas fa-project-diagram"></i> 知识图谱可视化</h2>
+                    <div class="graph-controls">
+                        <button class="btn-control" id="layout-force"><i class="fas fa-sitemap"></i> 力导向布局</button>
+                        <button class="btn-control" id="layout-hierarchical"><i class="fas fa-layer-group"></i> 层次布局</button>
+                        <button class="btn-control" id="layout-circular"><i class="fas fa-circle"></i> 圆形布局</button>
+                        <button class="btn-control" id="reset-layout"><i class="fas fa-redo"></i> 重置布局</button>
+                        <div class="zoom-controls">
+                            <button class="btn-icon" id="zoom-in"><i class="fas fa-search-plus"></i></button>
+                            <button class="btn-icon" id="zoom-out"><i class="fas fa-search-minus"></i></button>
+                            <span>缩放: <span id="zoom-level">100%</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="graph-container">
+                    <div class="graph-visualization" id="knowledge-graph-visualization">
+                        <!-- D3.js 将在此渲染知识图谱 -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i> 加载知识图谱数据...
+                        </div>
+                    </div>
+                    <div class="graph-sidebar">
+                        <div class="node-details">
+                            <h3><i class="fas fa-info-circle"></i> 节点详情</h3>
+                            <div class="detail-content" id="node-details-content">
+                                <p>选择一个节点以查看详细信息</p>
+                            </div>
+                        </div>
+                        <div class="graph-legend">
+                            <h3><i class="fas fa-palette"></i> 图例</h3>
+                            <ul>
+                                <li><span class="legend-color concept"></span> 概念</li>
+                                <li><span class="legend-color resource"></span> 资源</li>
+                                <li><span class="legend-color person"></span> 人物</li>
+                                <li><span class="legend-color event"></span> 事件</li>
+                            </ul>
+                        </div>
+                        <div class="graph-actions">
+                            <h3><i class="fas fa-cogs"></i> 操作</h3>
+                            <div class="action-buttons">
+                                <button class="btn-toolbar" id="create-node-btn">
+                                    <i class="fas fa-plus-circle"></i> 创建节点
+                                </button>
+                                <button class="btn-toolbar" id="create-edge-btn">
+                                    <i class="fas fa-link"></i> 创建连接
+                                </button>
+                                <button class="btn-toolbar" id="export-graph-btn">
+                                    <i class="fas fa-download"></i> 导出图谱
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2023 NEXUS知因 智能学习系统 | 遵循 WCAG 2.1 可访问性标准 | 响应式设计支持 PC、平板和移动端</p>
+        </footer>
+    </div>
+
+    <!-- 模态框：创建新节点 -->
+    <div class="modal" id="create-node-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> 创建新节点</h3>
+                <button class="btn-close" id="close-create-node-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-node-form">
+                    <div class="form-group">
+                        <label for="node-name">节点名称</label>
+                        <input type="text" id="node-name" placeholder="输入节点名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-type">节点类型</label>
+                        <select id="node-type">
+                            <option value="concept">概念</option>
+                            <option value="resource">资源</option>
+                            <option value="person">人物</option>
+                            <option value="event">事件</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-description">节点描述</label>
+                        <textarea id="node-description" rows="3" placeholder="描述这个节点"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-create-node">取消</button>
+                <button class="btn-primary" id="submit-create-node">创建节点</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        // 页面初始化脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新用户名显示
+            if (currentUsername && currentUsername !== '用户') {
+                document.getElementById('current-username').textContent = currentUsername;
+            } else {
+                fetch('/api/v1/users/query/basic', {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200 && data.data) {
+                        document.getElementById('current-username').textContent = data.data.username || '用户';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('current-username').textContent = '用户';
+                });
+            }
+
+            // 加载知识图谱数据
+            loadKnowledgeGraph();
+        });
+
+        async function loadKnowledgeGraph() {
+            try {
+                // 这里应该调用知识图谱的API，但如果没有，我们可以使用模拟数据
+                // 假设我们有一个API可以获取知识图谱数据
+                // const response = await fetch('/api/v1/knowledge/graphs?userId=' + currentUserId, {
+                //     headers: {
+                //         'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                //     }
+                // });
+
+                // 为了演示，我们使用模拟数据
+                const mockData = {
+                    nodes: [
+                        { id: '机器学习', type: 'concept', size: 40 },
+                        { id: '神经网络', type: 'concept', size: 35 },
+                        { id: '深度学习', type: 'concept', size: 38 },
+                        { id: '梯度下降', type: 'concept', size: 32 },
+                        { id: '反向传播', type: 'concept', size: 30 },
+                        { id: '卷积神经网络', type: 'concept', size: 36 },
+                        { id: '机器学习导论.pdf', type: 'resource', size: 28 },
+                        { id: '神经网络教程.mp4', type: 'resource', size: 28 },
+                        { id: '吴恩达', type: 'person', size: 32 },
+                        { id: 'ImageNet竞赛', type: 'event', size: 34 }
+                    ],
+                    links: [
+                        { source: '机器学习', target: '神经网络' },
+                        { source: '机器学习', target: '深度学习' },
+                        { source: '神经网络', target: '梯度下降' },
+                        { source: '神经网络', target: '反向传播' },
+                        { source: '深度学习', target: '卷积神经网络' },
+                        { source: '机器学习', target: '机器学习导论.pdf' },
+                        { source: '神经网络', target: '神经网络教程.mp4' },
+                        { source: '吴恩达', target: '机器学习' },
+                        { source: '吴恩达', target: '深度学习' },
+                        { source: 'ImageNet竞赛', target: '卷积神经网络' },
+                        { source: '梯度下降', target: '反向传播' }
+                    ]
+                };
+
+                renderKnowledgeGraph(mockData);
+                
+            } catch (error) {
+                console.error('加载知识图谱失败:', error);
+                document.getElementById('knowledge-graph-visualization').innerHTML = 
+                    '<div class="error-message">加载失败，请刷新页面重试</div>';
+            }
+        }
+
+        function renderKnowledgeGraph(graphData) {
+            const container = document.getElementById('knowledge-graph-visualization');
+            container.innerHTML = '';
+            
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            const svg = d3.select('#knowledge-graph-visualization')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .call(d3.zoom()
+                    .scaleExtent([0.1, 4])
+                    .on('zoom', zoomed))
+                .append('g');
+
+            // 颜色映射
+            const colorMap = {
+                concept: '#4361ee',
+                resource: '#7209b7',
+                person: '#f72585',
+                event: '#4cc9f0'
+            };
+
+            // 创建力导向模拟
+            const simulation = d3.forceSimulation(graphData.nodes)
+                .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => d.size + 5));
+
+            // 创建连线
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(graphData.links)
+                .enter()
+                .append('line')
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.6)
+                .attr('stroke-width', 2);
+
+            // 创建节点
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(graphData.nodes)
+                .enter()
+                .append('circle')
+                .attr('r', d => d.size)
+                .attr('fill', d => colorMap[d.type] || '#999')
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended))
+                .on('click', handleNodeClick);
+
+            // 添加节点标签
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(graphData.nodes)
+                .enter()
+                .append('text')
+                .text(d => d.id)
+                .attr('font-size', d => Math.max(12, d.size / 3))
+                .attr('dx', 15)
+                .attr('dy', 5)
+                .attr('fill', '#333')
+                .attr('pointer-events', 'none');
+
+            // 缩放函数
+            function zoomed(event) {
+                svg.attr('transform', event.transform);
+                const zoomLevel = event.transform.k;
+                document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+            }
+
+            // 拖动函数
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+
+            // 节点点击处理
+            function handleNodeClick(event, d) {
+                // 高亮相关节点和连线
+                node.attr('opacity', 0.3);
+                link.attr('opacity', 0.3);
+                
+                const connectedNodes = new Set([d.id]);
+                const connectedLinks = graphData.links.filter(l => 
+                    l.source.id === d.id || l.target.id === d.id
+                );
+                
+                connectedLinks.forEach(l => {
+                    connectedNodes.add(l.source.id);
+                    connectedNodes.add(l.target.id);
+                });
+                
+                node.filter(n => connectedNodes.has(n.id))
+                    .attr('opacity', 1);
+                link.filter(l => 
+                    l.source.id === d.id || l.target.id === d.id
+                ).attr('opacity', 1);
+                
+                // 显示节点详情
+                showNodeDetails(d);
+            }
+
+            // 双击重置高亮
+            svg.on('dblclick', () => {
+                node.attr('opacity', 1);
+                link.attr('opacity', 0.6);
+            });
+
+            // 更新模拟位置
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+
+            // 布局控制按钮事件
+            document.getElementById('layout-force').addEventListener('click', () => {
+                applyLayout('force', simulation);
+            });
+            document.getElementById('layout-hierarchical').addEventListener('click', () => {
+                applyLayout('hierarchical', simulation);
+            });
+            document.getElementById('layout-circular').addEventListener('click', () => {
+                applyLayout('circular', simulation);
+            });
+            document.getElementById('reset-layout').addEventListener('click', () => {
+                resetLayout(simulation);
+            });
+        }
+
+        function applyLayout(layoutType, simulation) {
+            switch (layoutType) {
+                case 'force':
+                    simulation
+                        .force('charge', d3.forceManyBody().strength(-300))
+                        .force('link', d3.forceLink().distance(100))
+                        .alphaTarget(0.3)
+                        .restart();
+                    break;
+                case 'hierarchical':
+                    // 简化的层次布局模拟
+                    simulation
+                        .force('charge', d3.forceManyBody().strength(-500))
+                        .force('link', d3.forceLink().distance(150))
+                        .alphaTarget(0.3)
+                        .restart();
+                    break;
+                case 'circular':
+                    // 简化的圆形布局模拟
+                    simulation
+                        .force('charge', d3.forceManyBody().strength(-100))
+                        .force('link', d3.forceLink().distance(200))
+                        .alphaTarget(0.3)
+                        .restart();
+                    break;
+            }
+            showNotification(`应用${getLayoutName(layoutType)}布局`, 'info');
+        }
+
+        function getLayoutName(layoutType) {
+            const names = {
+                force: '力导向',
+                hierarchical: '层次',
+                circular: '圆形'
+            };
+            return names[layoutType] || layoutType;
+        }
+
+        function resetLayout(simulation) {
+            if (simulation) {
+                simulation.alphaTarget(0.3).restart();
+                showNotification('图谱布局已重置', 'success');
+            }
+        }
+
+        function showNodeDetails(node) {
+            const typeNames = {
+                concept: '概念',
+                resource: '资源',
+                person: '人物',
+                event: '事件'
+            };
+            
+            const details = `
+                <h4>${node.id}</h4>
+                <p><strong>类型:</strong> ${typeNames[node.type] || node.type}</p>
+                <p><strong>节点大小:</strong> ${node.size}px</p>
+                <p><strong>连接数:</strong> ${getNodeConnections(node.id)}</p>
+                <div class="node-actions">
+                    <button class="btn-icon" onclick="focusOnNode('${node.id}')" title="聚焦">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="btn-icon" onclick="expandNode('${node.id}')" title="展开">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('node-details-content').innerHTML = details;
+        }
+
+        function getNodeConnections(nodeId) {
+            // 这是一个简化的实现
+            return Math.floor(Math.random() * 5) + 1;
+        }
+
+        function focusOnNode(nodeId) {
+            showNotification(`聚焦节点: ${nodeId}`, 'info');
+        }
+
+        function expandNode(nodeId) {
+            showNotification(`展开节点: ${nodeId}`, 'info');
+        }
+
+        function showNotification(message, type = 'info') {
+            // 使用script.js中的通知函数
+            if (window.showNotification) {
+                window.showNotification(message, type);
+            } else {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+    </script>
+</body>
+</html>

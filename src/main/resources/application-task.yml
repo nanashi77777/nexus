@@ -1,0 +1,19 @@
+nexus:
+  task:
+    enabled: true
+    polling:
+      interval: 5
+      unit: SECONDS
+      batch-size: 10
+    short-running:
+      concurrency: 200
+    long-running:
+      core-pool-size: 4
+      max-pool-size: 16
+      keep-alive-time: 60
+      queue-capacity: 100
+    mapping:
+      long-running:
+        # - "video-processing"
+        # - "data-report-generation"
+        - "explanation_ai_generate"

@@ -1,0 +1,16 @@
+spring:
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java
+    livereload:
+      enabled: true
+logging:
+  level:
+    cn.lin037.nexus: debug
+    org.springframework.web: debug
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-prefix: fuck_db

@@ -1,0 +1,2643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus 智能助手 - 综合测试平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+    <!-- 引入 KaTeX 数学公式渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f6;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部登录栏 */
+        .login-bar {
+            background-color: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .brand { font-weight: bold; font-size: 1.1em; color: #333; }
+        .login-inputs { display: flex; gap: 10px; }
+        .login-inputs input { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; }
+
+        /* 导航栏 */
+        .nav-bar {
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            padding: 0 20px;
+            height: 40px;
+            align-items: center;
+            gap: 20px;
+        }
+        .nav-item {
+            cursor: pointer;
+            padding: 10px 0;
+            color: #666;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { color: var(--primary-color); }
+        .nav-item.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+
+        /* 主容器 */
+        .main-container {
+            flex: 1;
+            overflow: hidden;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            position: relative;
+        }
+        .main-container.active { opacity: 1; pointer-events: all; }
+
+        /* Tab 内容区域 */
+        .tab-content {
+            display: none;
+            height: 100%;
+            width: 100%;
+        }
+        .tab-content.active { display: flex; }
+
+        /* --- Agent Chat 样式 --- */
+        .chat-layout { display: flex; width: 100%; height: 100%; }
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #f0f0f0; }
+        .new-chat-btn {
+            width: 100%; padding: 10px; background-color: var(--primary-color); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .new-chat-btn:hover { background-color: #0056b3; }
+        .session-list { flex: 1; overflow-y: auto; }
+        .session-item {
+            padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f9f9f9; transition: all 0.2s;
+            position: relative;
+        }
+        .session-item:hover { background-color: #f8f9fa; }
+        .session-item.active { background-color: #e8f0fe; border-left: 4px solid var(--primary-color); }
+        .session-title { font-weight: 500; font-size: 0.95em; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; }
+        .session-meta { font-size: 0.75em; color: #888; display: flex; justify-content: space-between; }
+        .delete-session-btn {
+            position: absolute; right: 10px; top: 12px; color: #999; font-size: 1.2em; line-height: 1;
+            display: none; cursor: pointer; padding: 2px; border-radius: 4px;
+        }
+        .session-item:hover .delete-session-btn { display: block; }
+        .delete-session-btn:hover { color: #dc3545; background-color: rgba(220, 53, 69, 0.1); }
+
+        /* --- 学习规划面板 --- */
+        .learning-plan-panel {
+            width: 280px;
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .learning-plan-panel.collapsed {
+            width: 40px;
+            border-right: none;
+        }
+        .learning-plan-panel.collapsed .plan-panel-header h3,
+        .learning-plan-panel.collapsed .plan-progress,
+        .learning-plan-panel.collapsed .plan-content,
+        .learning-plan-panel.collapsed .plan-summary {
+            display: none;
+        }
+        .learning-plan-panel.collapsed .plan-panel-header {
+            padding: 5px;
+            border-bottom: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .learning-plan-panel.collapsed .toggle-plan-panel {
+            position: static;
+            transform: rotate(90deg);
+            font-size: 1.5em;
+            margin: 0;
+        }
+        .plan-panel-header {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .plan-panel-header h3 {
+            margin: 0;
+            font-size: 1em;
+            font-weight: 600;
+            color: #333;
+        }
+        .toggle-plan-panel {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 1.2em;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .toggle-plan-panel:hover {
+            background-color: #f5f5f5;
+        }
+        .plan-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        .plan-task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .plan-task-item {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            background-color: #fff;
+            border: 1px solid #eaeaea;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .plan-task-item:hover {
+            border-color: #d0d0d0;
+        }
+        .plan-task-item.completed {
+            background-color: #f0f9f0;
+            border-color: #c3e6cb;
+        }
+        .plan-task-item.current {
+            border-color: #007bff;
+            box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.2);
+        }
+        .task-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .task-status.completed {
+            background-color: #28a745;
+            color: white;
+        }
+        .task-status.pending {
+            background-color: #fff;
+            border: 2px solid #dee2e6;
+        }
+        .task-content {
+            flex: 1;
+        }
+        .task-title {
+            font-weight: 500;
+            font-size: 0.9em;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .task-desc {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .plan-summary {
+            padding: 10px 15px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.85em;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        .plan-progress {
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            margin: 10px 15px;
+            overflow: hidden;
+        }
+        .plan-progress-bar {
+            height: 100%;
+            background-color: #28a745;
+            transition: width 0.3s ease;
+        }
+
+        .chat-area {
+            flex: 1; display: flex; flex-direction: column; background-color: var(--bg-color); position: relative;
+        }
+        #messageContainer {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth;
+        }
+        .message-bubble {
+            max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.6; word-wrap: break-word; position: relative; font-size: 0.95em;
+        }
+        .message-bubble p { margin: 0 0 10px 0; }
+        .message-bubble p:last-child { margin-bottom: 0; }
+        .message-bubble pre { background: #f6f8fa; padding: 10px; border-radius: 6px; overflow-x: auto; margin: 10px 0; border: 1px solid #e1e4e8; }
+        .message-bubble code { font-family: Consolas, Monaco, "Courier New", monospace; background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; font-size: 0.9em; }
+        .message-bubble pre code { background: none; padding: 0; color: #333; }
+        .message-user { align-self: flex-end; background-color: var(--primary-color); color: white; border-bottom-right-radius: 2px; }
+        .message-user a { color: #e0f0ff; text-decoration: underline; }
+        .message-user pre { background: #f8f9fa; color: #333; border: none; }
+        .message-user code { color: #333; background: rgba(255,255,255,0.9); }
+        .message-agent { align-self: flex-start; background-color: #fff; color: #333; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-bottom-left-radius: 2px; }
+        .stream-cursor::after { content: "▋"; display: inline-block; animation: blink 1s infinite; color: #007bff; margin-left: 2px; }
+        .input-area { padding: 20px; background-color: #fff; border-top: 1px solid #ddd; display: flex; gap: 10px; align-items: flex-end; }
+        textarea { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; resize: none; height: 24px; min-height: 24px; max-height: 150px; font-family: inherit; line-height: 1.5; outline: none; }
+        textarea:focus { border-color: var(--primary-color); }
+        button.action-btn { height: 50px; padding: 0 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        #sendBtn { background-color: var(--primary-color); color: white; }
+        #sendBtn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #cancelBtn { background-color: #dc3545; color: white; display: none; }
+
+        /* --- 资源 & 知识模块样式 --- */
+        .module-container {
+            padding: 30px;
+            width: 100%;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .card.wide { max-width: 1200px; }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #333; display: flex; justify-content: space-between; align-items: center; }
+        .list-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .list-table th, .list-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .list-table th { background-color: #f8f9fa; font-weight: 600; color: #555; }
+        .list-table tr:hover { background-color: #f8f9fa; }
+        .action-link { color: var(--primary-color); cursor: pointer; margin-right: 10px; text-decoration: none; }
+        .action-link:hover { text-decoration: underline; }
+        .action-link.danger { color: #dc3545; }
+        .chunk-content { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: monospace; color: #666; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+        }
+        .form-group textarea { height: 80px; resize: vertical; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;
+            background-color: var(--primary-color); color: white;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .result-box {
+            margin-top: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 4px;
+            font-family: monospace; white-space: pre-wrap; font-size: 0.9em; color: #333;
+            display: none;
+        }
+        .result-box.success { border-color: #c3e6cb; background-color: #d4edda; color: #155724; display: block; }
+        .result-box.error { border-color: #f5c6cb; background-color: #f8d7da; color: #721c24; display: block; }
+
+        #graphContainer {
+            width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; background: #fff;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+        .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin-left: 10px; }
+        .status-ok { background-color: #d4edda; color: #155724; }
+        .status-err { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="login-bar">
+    <div class="brand">Nexus 综合测试平台</div>
+    <form id="loginForm" style="display: flex; align-items: center;">
+        <div class="login-inputs">
+            <input type="text" id="account" value="3010461141@qq.com" placeholder="账号" required>
+            <input type="password" id="password" value="Nexus.Test" placeholder="密码" required>
+        </div>
+        <button type="submit" style="margin-left: 10px; padding: 6px 15px; cursor: pointer;">登录</button>
+        <span id="loginStatus"></span>
+        <div id="spaceSelector" style="margin-left: 20px; display: none;">
+            <label for="learningSpaceSelect">学习空间:</label>
+            <select id="learningSpaceSelect" style="margin-left: 5px;">
+                <option value="">请选择</option>
+            </select>
+            <button id="createSpaceBtn" type="button" style="margin-left: 10px;">新建</button>
+        </div>
+    </form>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item active" onclick="switchTab('chat')">Agent 会话</div>
+    <div class="nav-item" onclick="switchTab('resource')">资源管理</div>
+    <div class="nav-item" onclick="switchTab('knowledge')">知识图谱</div>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <!-- Tab 1: Agent Chat -->
+    <div id="tab-chat" class="tab-content active">
+        <div class="chat-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <button class="new-chat-btn" id="newChatBtn"><span>+</span> 新建会话</button>
+                </div>
+                <div class="session-list" id="sessionList">
+                    <div style="padding:20px; text-align:center; color:#999; font-size:0.9em;">请先登录</div>
+                </div>
+            </div>
+
+            <!-- 学习规划面板 -->
+            <div class="learning-plan-panel" id="learningPlanPanel">
+                <div class="plan-panel-header">
+                    <h3>📚 学习规划</h3>
+                    <button class="toggle-plan-panel" id="togglePlanPanel" title="折叠/展开">▼</button>
+                </div>
+                <div class="plan-progress">
+                    <div class="plan-progress-bar" id="planProgressBar" style="width: 0%"></div>
+                </div>
+                <div class="plan-content" id="planContent">
+                    <ul class="plan-task-list" id="planTaskList">
+                        <!-- 任务将通过JavaScript动态添加 -->
+                    </ul>
+                </div>
+                <div class="plan-summary">
+                    <span>进度: <span id="planProgressText">0/0</span></span>
+                    <span id="planCurrentTask">无任务</span>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div id="messageContainer">
+                    <div style="text-align: center; color: #aaa; margin-top: 20%; font-size: 1.1em;">
+                        <p>👋 欢迎使用 Nexus 智能助手</p>
+                        <p style="font-size: 0.9em;">请在左侧选择会话或新建会话</p>
+                    </div>
+                </div>
+
+                <form id="chatForm" class="input-area">
+                    <input type="hidden" id="currentSessionId">
+                    <textarea id="content" placeholder="输入消息... (Shift+Enter 换行)" disabled></textarea>
+                    <button type="button" id="cancelBtn" class="action-btn">停止</button>
+                    <button type="submit" id="sendBtn" class="action-btn" disabled>发送</button>
+                </form>
+                <div id="chatStatus" style="position:absolute; bottom:80px; left:20px; font-size:0.8em; color:#666;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Resource Management -->
+    <div id="tab-resource" class="tab-content">
+        <div class="module-container">
+            <div class="card">
+                <h3>上传资源文件</h3>
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label>学习空间 ID</label>
+                        <input type="text" id="resSpaceId" value="114381046413262850" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>选择文件</label>
+                        <input type="file" id="resFile" required>
+                    </div>
+                    <div class="form-group">
+                        <label>资源标题 (可选，默认文件名)</label>
+                        <input type="text" id="resTitle">
+                    </div>
+                    <div class="form-group">
+                        <label>资源描述</label>
+                        <textarea id="resDesc"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>分片策略</label>
+                        <select id="resSliceStrategy">
+                            <option value="0">按Token递归拆分</option>
+                            <option value="1">按行拆分</option>
+                            <option value="2">按Markdown格式拆分</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">上传</button>
+                </form>
+                <div id="uploadResult" class="result-box"></div>
+            </div>
+
+            <div class="card wide">
+                <h3>
+                    资源列表
+                    <button class="btn btn-secondary" onclick="loadResourceList()" style="font-size: 0.8em; padding: 4px 10px;">刷新</button>
+                </h3>
+                <div id="resourceListContainer">
+                    <div style="text-align:center; color:#999; padding: 20px;">点击刷新加载资源列表</div>
+                </div>
+            </div>
+
+            <div class="card wide" id="chunkListCard" style="display: none;">
+                <h3>
+                    <span>分片列表: <span id="currentResourceTitle" style="font-weight: normal; color: #666;"></span></span>
+                    <button class="btn btn-secondary" onclick="refreshChunkList()" style="font-size: 0.8em; padding: 4px 10px;">刷新</button>
+                </h3>
+                <div id="chunkListContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Knowledge Graph -->
+    <div id="tab-knowledge" class="tab-content">
+        <div class="module-container">
+            <div class="card">
+                <h3>AI 生成知识图谱</h3>
+                <form id="aiGenerateForm" onsubmit="return false;">
+                    <div class="form-group">
+                        <label>学习空间 ID</label>
+                        <input type="text" id="aiSpaceId" value="114381046413262850" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>选择现有资源 (可选)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="aiResourceSelect" style="flex: 1;">
+                                <option value="">请选择资源</option>
+                            </select>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px;" onclick="loadResourceListForSelect()">刷新资源列表</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>或输入自定义提示词</label>
+                        <textarea id="aiPrompt" placeholder="例如：请帮我生成关于Java多线程的知识图谱..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>目标文件夹 (可选)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="aiFolderSelect" style="flex: 1;">
+                                <option value="0">根目录</option>
+                            </select>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px;" onclick="loadFolderList()">刷新文件夹</button>
+                            <button type="button" class="btn" style="padding: 6px 12px;" onclick="showCreateFolderModal()">新建文件夹</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>生成模式</label>
+                        <select id="aiMode">
+                            <option value="FROM_RESOURCE">从资源生成</option>
+                            <option value="FROM_PROMPT">从提示词生成</option>
+                            <option value="EXPAND_EXISTING">扩展现有知识点</option>
+                        </select>
+                    </div>
+                    <button type="button" id="aiGenerateButton" class="btn">开始生成</button>
+                </form>
+                <div id="aiGenerateResult" class="result-box"></div>
+                <div id="aiTaskStatus" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>任务状态: <span id="aiTaskStatusText">处理中...</span></span>
+                        <button id="aiCancelBtn" class="btn-secondary" style="padding: 4px 8px;">取消任务</button>
+                    </div>
+                    <div id="aiTaskProgress" style="margin-top: 5px; height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                        <div id="aiTaskProgressBar" style="height: 100%; width: 0%; background: var(--primary-color); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="max-width: 100%;">
+                <h3>
+                    知识图谱管理
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="loadKnowledgeGraphs()" style="font-size: 0.8em; padding: 4px 10px;">刷新列表</button>
+                        <button class="btn btn-secondary" onclick="renderRealGraph()" style="font-size: 0.8em; padding: 4px 10px;">加载选中图谱</button>
+                    </div>
+                </h3>
+                <div style="margin-bottom: 15px;">
+                    <div id="knowledgeGraphsList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 10px; background: #fafafa;">
+                        <div style="text-align: center; color: #999; padding: 20px;">点击"刷新列表"加载知识图谱</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                    <span style="font-weight: 500; color: #555;">当前图谱: </span>
+                    <span id="currentGraphInfo" style="color: #666; font-style: italic;">未选择</span>
+                    <button id="deleteGraphBtn" class="btn-secondary" style="margin-left: auto; padding: 4px 8px; font-size: 0.8em; display: none;">删除当前图谱</button>
+                </div>
+                
+                <div id="graphContainer" style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; background: #fff;"></div>
+                
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn-secondary" onclick="exportGraphData()" style="padding: 6px 12px; font-size: 0.85em;">导出数据</button>
+                    <button class="btn-secondary" onclick="printGraph()" style="padding: 6px 12px; font-size: 0.85em;">打印图谱</button>
+                    <button class="btn-secondary" onclick="toggleGraphLayout()" style="padding: 6px 12px; font-size: 0.85em;">切换布局</button>
+                </div>
+                
+                <div id="graphDetails" style="margin-top: 15px; display: none; padding: 15px; background: #f8f9fa; border-radius: 4px; border: 1px solid #eee;">
+                    <h4 style="margin-top: 0;">图谱详情</h4>
+                    <div id="graphDetailsContent"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>图谱节点操作</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <h4 style="margin-top: 0; font-size: 0.95em;">添加节点</h4>
+                        <form id="addNodeForm" style="display: flex; flex-direction: column; gap: 8px;">
+                            <input type="text" id="nodeName" placeholder="节点名称" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                            <textarea id="nodeDesc" placeholder="节点描述" rows="2" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                            <select id="nodeCategory" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="0">概念</option>
+                                <option value="1">实体</option>
+                                <option value="2">属性</option>
+                                <option value="3">方法</option>
+                            </select>
+                            <button type="button" class="btn" onclick="addNodeToGraph()" style="padding: 6px 12px;">添加节点</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h4 style="margin-top: 0; font-size: 0.95em;">添加关系</h4>
+                        <form id="addEdgeForm" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="edgeSource" placeholder="源节点ID" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <input type="text" id="edgeTarget" placeholder="目标节点ID" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <input type="text" id="edgeType" placeholder="关系类型" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                            <textarea id="edgeDesc" placeholder="关系描述" rows="2" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                            <button type="button" class="btn" onclick="addEdgeToGraph()" style="padding: 6px 12px;">添加关系</button>
+                        </form>
+                    </div>
+                </div>
+                <div id="nodeOpResult" class="result-box" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= 配置区 =================
+    const BASE_API_URL = '/api/v1';
+    const SA_TOKEN_HEADER = "auth_token";
+    const TARGET_LEARNING_SPACE_ID = "114381046413262850";
+
+    marked.use({ breaks: true, gfm: true, headerIds: false, mangle: false });
+
+    // Markdown转HTML，并渲染数学公式
+    function markdownToHtml(text) {
+        if (!text) return '';
+
+        const codeMap = new Map();
+        const mathMap = new Map();
+        let codeCount = 0;
+        let mathCount = 0;
+
+        // 1. 保护代码块 (Code Blocks)
+        let protectedText = text.replace(/```[\s\S]*?```/g, (match) => {
+            const key = `CODEBLOCKPLACEHOLDER${codeCount++}END`;
+            codeMap.set(key, match);
+            return key;
+        });
+
+        // 2. 保护行内代码 (Inline Code)
+        protectedText = protectedText.replace(/`[^`]*`/g, (match) => {
+            const key = `CODEINLINEPLACEHOLDER${codeCount++}END`;
+            codeMap.set(key, match);
+            return key;
+        });
+
+        // 3. 保护公式 (Math)
+        // 注意：先处理块级公式，再处理行内公式
+
+        // $$...$$
+        protectedText = protectedText.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+            const key = `MATHBLOCKPLACEHOLDER${mathCount++}END`;
+            mathMap.set(key, { type: 'display', formula: formula, original: match });
+            return key;
+        });
+
+        // \[...\]
+        protectedText = protectedText.replace(/\\\[([\s\S]+?)\\\]/g, (match, formula) => {
+            const key = `MATHBLOCKPLACEHOLDER${mathCount++}END`;
+            mathMap.set(key, { type: 'display', formula: formula, original: match });
+            return key;
+        });
+
+        // \(...\)
+        protectedText = protectedText.replace(/\\\(([\s\S]+?)\\\)/g, (match, formula) => {
+            const key = `MATHINLINEPLACEHOLDER${mathCount++}END`;
+            mathMap.set(key, { type: 'inline', formula: formula, original: match });
+            return key;
+        });
+
+        // $...$ (排除 \$ 转义的情况)
+        // 简单的 $...$ 匹配，不匹配 \$
+        protectedText = protectedText.replace(/(?<!\\)\$([^$]+?)(?<!\\)\$/g, (match, formula) => {
+            const key = `MATHINLINEPLACEHOLDER${mathCount++}END`;
+            mathMap.set(key, { type: 'inline', formula: formula, original: match });
+            return key;
+        });
+
+        // 4. 还原代码块 (在 Markdown 解析前还原，让 marked 处理代码高亮)
+        // 注意：如果代码块里有 math placeholder，marked 可能会处理它，所以这里还原代码块是安全的，
+        // 因为我们已经把 math 提取出来了。但是，如果 math 在代码块里，我们不应该提取它。
+        // 上面的顺序是先提取代码块，所以 math 提取不会触及代码块内部。
+        // 这里我们需要把代码块占位符还原回原始代码，以便 marked 解析。
+        codeMap.forEach((value, key) => {
+            protectedText = protectedText.replace(key, value);
+        });
+
+        // 5. Markdown 解析
+        let html = marked.parse(protectedText);
+
+        // 6. 渲染公式 (替换 Math Placeholders)
+        if (typeof katex !== 'undefined') {
+            mathMap.forEach((value, key) => {
+                try {
+                    const rendered = katex.renderToString(value.formula, {
+                        displayMode: value.type === 'display',
+                        throwOnError: false
+                    });
+                    // 全局替换，因为 marked 可能会把 placeholder 放在 p 标签里
+                    html = html.split(key).join(rendered);
+                } catch (e) {
+                    console.error('KaTeX error:', e);
+                    html = html.split(key).join(value.original);
+                }
+            });
+        } else {
+            // KaTeX 未加载，还原原始内容
+            mathMap.forEach((value, key) => {
+                html = html.split(key).join(value.original);
+            });
+        }
+
+        return html;
+    }
+
+    // ================= 全局变量 =================
+    let authToken = null;
+    let chatAbortController = null;
+    let currentAgentBubble = null;
+    let currentStreamText = "";
+    let myChart = null;
+    let currentLearningSpaceId = null;
+
+    // ================= DOM 元素 =================
+    const loginForm = document.getElementById('loginForm');
+    const loginStatus = document.getElementById('loginStatus');
+    const mainContainer = document.getElementById('mainContainer');
+    const sessionListEl = document.getElementById('sessionList');
+    const messageContainer = document.getElementById('messageContainer');
+    const chatForm = document.getElementById('chatForm');
+    const contentInput = document.getElementById('content');
+    const sendBtn = document.getElementById('sendBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const currentSessionIdInput = document.getElementById('currentSessionId');
+    const newChatBtn = document.getElementById('newChatBtn');
+
+    // ================= Tab 切换 =================
+    window.switchTab = function(tabName) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+
+        document.querySelector(`.nav-item[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+
+        if (tabName === 'knowledge' && !myChart) {
+            setTimeout(renderDemoGraph, 100); // 初始化图表
+        }
+    };
+
+    // ================= 辅助：自定义 JSON 解析 =================
+    async function fetchWithBigInt(url, options) {
+        const response = await fetch(url, options);
+        if (!response.ok) return { ok: false, status: response.status, rawText: await response.text() };
+
+        const rawText = await response.text();
+        const fixedJson = rawText.replace(/:\s*(\d{16,})/g, ': "$1"');
+        try {
+            const data = JSON.parse(fixedJson);
+            return { ok: true, json: data };
+        } catch(e) {
+            return { ok: true, json: JSON.parse(rawText) };
+        }
+    }
+
+    // ================= 1. 登录 =================
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const account = document.getElementById('account').value;
+        const password = document.getElementById('password').value;
+        loginStatus.innerHTML = '<span class="status-badge">登录中...</span>';
+        try {
+            const res = await fetch(`${BASE_API_URL}/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account, password })
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                authToken = result.data.tokenValue;
+                loginStatus.innerHTML = '<span class="status-badge status-ok">已连接</span>';
+                mainContainer.classList.add('active');
+                loginForm.querySelector('button').disabled = true;
+
+                // 显示学习空间选择器
+                document.getElementById('spaceSelector').style.display = 'block';
+                await loadLearningSpaces();
+                // 加载会话列表时传入当前学习空间ID（如果有）
+                await loadSessionList(currentLearningSpaceId);
+            } else { throw new Error(result.message || "登录失败"); }
+        } catch (err) { loginStatus.innerHTML = `<span class="status-badge status-err">${err.message}</span>`; }
+    });
+
+    // ================= 学习空间管理 =================
+    const spaceSelect = document.getElementById('learningSpaceSelect');
+    const createSpaceBtn = document.getElementById('createSpaceBtn');
+
+    // 加载学习空间列表
+    async function loadLearningSpaces() {
+        spaceSelect.innerHTML = '<option value="">请选择</option>';
+        try {
+            const params = new URLSearchParams({ pageSize: 100, page: 1 });
+            const { ok, json: result, status } = await fetchWithBigInt(`${BASE_API_URL}/learning-space/query/my?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            if (!ok) throw new Error(`HTTP ${status}`);
+            if (result.code === 200 || result.code === "200000") {
+                // 处理不同的返回数据结构
+                let spaces = [];
+                if (Array.isArray(result.data)) {
+                    spaces = result.data;
+                } else if (result.data.results) {
+                    spaces = result.data.results;
+                } else if (result.data.records) {
+                    spaces = result.data.records;
+                } else if (result.data.list) {
+                    spaces = result.data.list;
+                } else {
+                    spaces = [result.data];
+                }
+                
+                // 确保spaces是数组
+                if (!Array.isArray(spaces)) {
+                    spaces = [];
+                }
+                
+                spaces.forEach(space => {
+                    const option = document.createElement('option');
+                    const spaceId = String(space.lsId || space.id || space.spaceId);
+                    const spaceName = space.name || space.spaceName || `空间${spaceId}`;
+                    option.value = spaceId;
+                    option.textContent = spaceName;
+                    
+                    // 设置默认选中的学习空间
+                    if (spaceId === TARGET_LEARNING_SPACE_ID) {
+                        option.selected = true;
+                        currentLearningSpaceId = spaceId;
+                        updateSpaceIdInForms(currentLearningSpaceId);
+                    }
+                    spaceSelect.appendChild(option);
+                });
+                
+                // 如果没有设置默认选中，且列表不为空，则选中第一个
+                if (!currentLearningSpaceId && spaces.length > 0) {
+                    const firstSpaceId = String(spaces[0].lsId || spaces[0].id || spaces[0].spaceId);
+                    spaceSelect.value = firstSpaceId;
+                    currentLearningSpaceId = firstSpaceId;
+                    updateSpaceIdInForms(firstSpaceId);
+                }
+                
+            } else { throw new Error(result.message || "获取空间列表失败"); }
+        } catch (err) {
+            console.error('加载学习空间失败:', err);
+            spaceSelect.innerHTML = '<option value="">加载失败</option>';
+        }
+    }
+
+    // 创建学习空间
+    createSpaceBtn.addEventListener('click', async () => {
+        const name = prompt('请输入学习空间名称:');
+        if (!name) return;
+        const description = prompt('请输入学习空间描述 (可选):') || '';
+        try {
+            const payload = { name, description };
+            const { ok, json: result, status } = await fetchWithBigInt(`${BASE_API_URL}/isolation/learning-space`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                alert('创建成功!');
+                await loadLearningSpaces();
+            } else {
+                throw new Error(result.message || `HTTP ${status}`);
+            }
+        } catch (err) {
+            alert('创建失败: ' + err.message);
+        }
+    });
+
+    // 切换学习空间
+    spaceSelect.addEventListener('change', function() {
+        const spaceId = this.value;
+        if (!spaceId) return;
+        currentLearningSpaceId = spaceId;
+        updateSpaceIdInForms(spaceId);
+        // 重新加载会话列表（因为会话可能依赖于学习空间）
+        loadSessionList(spaceId);
+    });
+
+    // 更新所有表单中的学习空间ID
+    function updateSpaceIdInForms(spaceId) {
+        document.getElementById('resSpaceId').value = spaceId;
+        document.getElementById('aiSpaceId').value = spaceId;
+        // 注意：relSpaceId可能不存在，因为relForm可能已被移除或重命名，但我们保留这行
+        const relSpaceIdEl = document.getElementById('relSpaceId');
+        if (relSpaceIdEl) relSpaceIdEl.value = spaceId;
+    }
+
+    // ================= 2. 会话列表 (已修改：过滤 acm_type == 0) =================
+    async function loadSessionList(learningSpaceId) {
+        sessionListEl.innerHTML = '<div style="padding:15px; text-align:center; color:#999;">加载中...</div>';
+        try {
+            const params = new URLSearchParams({ pageSize: 100, page: 1 });
+            if (learningSpaceId) {
+                params.append('learningSpaceId', learningSpaceId);
+            }
+            const { ok, json: result, status } = await fetchWithBigInt(`${BASE_API_URL}/agent/query/sessions?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            if (!ok) throw new Error(`HTTP ${status}`);
+            if (result.code === 200 || result.code === "200000") {
+                let sessions = result.data.results || result.data.records || [];
+                // 过滤 acm_type == 0 的记录 (注意：后端字段可能是 acmType 或 type，这里假设是 acmType 或 type)
+                // 如果后端返回的是下划线风格，请修改为 s.acm_type
+                sessions = sessions.filter(s => s.type === 0 || s.acmType === 0);
+
+                renderSessionList(sessions);
+            } else { throw new Error(result.message || "获取列表失败"); }
+        } catch (err) { sessionListEl.innerHTML = `<div style="padding:15px; color:red; font-size:0.9em;">加载失败: ${err.message}</div>`; }
+    }
+
+    function renderSessionList(sessions) {
+        sessionListEl.innerHTML = '';
+        if (sessions.length === 0) {
+            sessionListEl.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">暂无 Agent 会话</div>';
+            return;
+        }
+        sessions.forEach(session => {
+            const el = document.createElement('div');
+            el.className = 'session-item';
+            const sessionId = String(session.acsId || session.id);
+            el.dataset.id = sessionId;
+            el.onclick = () => switchSession(sessionId, el);
+            const timeStr = (session.createTime || session.createdAt || '').replace('T', ' ');
+            el.innerHTML = `
+                <div class="session-title">${session.title || '未命名会话'}</div>
+                <div class="session-meta">
+                    <span>${timeStr.substring(5, 16) || ''}</span>
+                    <span style="font-size:0.8em; opacity:0.6">#${sessionId.substring(sessionId.length-4)}</span>
+                </div>
+                <div class="delete-session-btn" onclick="deleteSession(event, '${sessionId}')" title="删除会话">×</div>
+            `;
+            sessionListEl.appendChild(el);
+        });
+    }
+
+    async function deleteSession(event, sessionId) {
+        event.stopPropagation(); // 阻止冒泡，防止触发 switchSession
+        if (!confirm('确定要删除这个会话吗？删除后无法恢复。')) return;
+
+        try {
+            // 使用 fetchWithBigInt 来处理长数字ID
+            const { ok, json: result, status } = await fetchWithBigInt(`${BASE_API_URL}/agent/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                // 如果删除的是当前选中的会话，清空聊天区域
+                if (currentSessionIdInput.value === sessionId) {
+                    currentSessionIdInput.value = '';
+                    messageContainer.innerHTML = '<div style="text-align: center; color: #aaa; margin-top: 20%; font-size: 1.1em;"><p>👋 欢迎使用 Nexus 智能助手</p><p style="font-size: 0.9em;">请在左侧选择会话或新建会话</p></div>';
+                    contentInput.disabled = true;
+                    sendBtn.disabled = true;
+                }
+                // 重新加载列表
+                await loadSessionList(currentLearningSpaceId);
+            } else {
+                alert("删除失败: " + (result?.message || `HTTP ${status}`));
+            }
+        } catch (e) {
+            alert("删除出错: " + e.message);
+        }
+    }
+
+    // ================= 3. 新建会话 =================
+    newChatBtn.addEventListener('click', async () => {
+        if (newChatBtn.disabled) return;
+        if (!currentLearningSpaceId) {
+            alert("请先选择一个学习空间");
+            return;
+        }
+        const originalText = newChatBtn.innerHTML;
+        newChatBtn.innerHTML = '创建中...';
+        newChatBtn.disabled = true;
+        try {
+            const payload = {
+                title: "新对话 " + new Date().toLocaleTimeString().slice(0,5),
+                learningSpaceId: currentLearningSpaceId,
+                type: 0, // 确保创建的是 Agent 会话 (acm_type=0)
+                belongsTo: 4,
+                isAutoCallTool: 3
+            };
+            const { ok, json: result, status } = await fetchWithBigInt(`${BASE_API_URL}/agent/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                await loadSessionList();
+                const newId = String(result.data.id || result.data.acsId);
+                setTimeout(() => {
+                    const newItem = document.querySelector(`.session-item[data-id="${newId}"]`);
+                    if (newItem) newItem.click();
+                    else sessionListEl.querySelector('.session-item')?.click();
+                }, 300);
+            } else {
+                let errorMsg = result ? result.message : `HTTP ${status}`;
+                if(result && result.data && typeof result.data === 'object') errorMsg += "\n" + JSON.stringify(result.data);
+                alert("创建失败: " + errorMsg);
+            }
+        } catch (e) { alert("错误: " + e.message); }
+        finally { newChatBtn.innerHTML = originalText; newChatBtn.disabled = false; }
+    });
+
+    // ================= 4. 切换会话 =================
+    async function switchSession(sessionId, element) {
+        document.querySelectorAll('.session-item').forEach(e => e.classList.remove('active'));
+        if (element) element.classList.add('active');
+        currentSessionIdInput.value = sessionId;
+        contentInput.disabled = false;
+        sendBtn.disabled = false;
+        contentInput.focus();
+        messageContainer.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">加载历史记录...</div>';
+
+        try {
+            const params = new URLSearchParams({ sessionId: sessionId, pageSize: 100, page: 1 });
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/agent/query/messages?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            messageContainer.innerHTML = '';
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                const messages = result.data.results || result.data.records || [];
+                if (messages.length === 0) {
+                    messageContainer.innerHTML = '<div style="text-align:center; color:#ddd; margin-top:50px;">开始新的聊天吧</div>';
+                } else {
+                    messages.slice().reverse().forEach(msg => {
+                        // 过滤掉非普通消息 (acm_type != 0)
+                        // 注意：后端VO字段可能是 messageType 或 acmType
+                        const msgType = (msg.messageType !== undefined) ? msg.messageType : msg.acmType;
+                        if (msgType !== undefined && msgType !== 0) return;
+
+                        let roleStr = msg.role;
+                        if(typeof roleStr === 'string') roleStr = roleStr.toLowerCase();
+
+                        const role = (roleStr === 'user') ? 'user' : 'agent';
+                        appendMessage(role, msg.content);
+                    });
+                }
+                scrollToBottom();
+            } else { messageContainer.innerHTML = `<div style="text-align:center; color:red;">${result ? result.message : '加载出错'}</div>`; }
+        } catch (e) { messageContainer.innerHTML = `<div style="text-align:center; color:red;">历史记录加载失败: ${e.message}</div>`; }
+    }
+
+    // ================= 5. 发送消息 & 流式处理 =================
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = contentInput.value.trim();
+        const sessionId = currentSessionIdInput.value;
+        if (!content || !sessionId) return;
+
+        appendMessage('user', content);
+        contentInput.value = '';
+        autoResizeTextarea(contentInput);
+        setChatState(true);
+
+        currentStreamText = "";
+        currentAgentBubble = appendMessage('agent', '', true);
+        chatAbortController = new AbortController();
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/agent/chat/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify({ sessionId: sessionId, content: content }),
+                signal: chatAbortController.signal
+            });
+            if (!res.ok) throw new Error(res.statusText);
+            const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+            let buffer = '';
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += value;
+                let eolIndex;
+                while ((eolIndex = buffer.indexOf('\n\n')) >= 0) {
+                    const chunk = buffer.substring(0, eolIndex);
+                    buffer = buffer.substring(eolIndex + 2);
+                    handleSSE(chunk);
+                }
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                if(currentAgentBubble) {
+                    currentStreamText += `\n**[错误: ${err.message}]**`;
+                    currentAgentBubble.innerHTML = marked.parse(currentStreamText);
+                }
+            }
+        } finally { endChatState(); }
+    });
+
+    function handleSSE(chunk) {
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+            if (line.startsWith('data:')) {
+                const dataStr = line.substring(5).trim();
+                if (dataStr === '[DONE]') return;
+                try {
+                    const json = JSON.parse(dataStr);
+                    if ((json.code === 200 || json.code === "200000") && json.data) {
+                        if (json.data.eventType === 'CONTENT' && json.data.content) {
+                            currentStreamText += json.data.content;
+                            currentAgentBubble.innerHTML = markdownToHtml(currentStreamText);
+                            scrollToBottom();
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+    }
+
+    cancelBtn.addEventListener('click', async () => {
+        if (chatAbortController) {
+            chatAbortController.abort();
+            chatAbortController = null;
+            if (currentAgentBubble) {
+                currentStreamText += " **[已中断]**";
+                currentAgentBubble.innerHTML = marked.parse(currentStreamText);
+            }
+            const sid = currentSessionIdInput.value;
+            fetch(`${BASE_API_URL}/agent/chat/cancel/${sid}`, {
+                method: 'POST', headers: { [SA_TOKEN_HEADER]: authToken }
+            }).catch(()=>{});
+            endChatState();
+        }
+    });
+
+    function appendMessage(role, text, isStream = false) {
+        const div = document.createElement('div');
+        div.className = `message-bubble message-${role} ${isStream ? 'stream-cursor' : ''}`;
+        if (text) div.innerHTML = markdownToHtml(text);
+        messageContainer.appendChild(div);
+        div.querySelectorAll('pre code').forEach((block) => { if(window.hljs) hljs.highlightElement(block); });
+        return div;
+    }
+
+    function scrollToBottom() { messageContainer.scrollTop = messageContainer.scrollHeight; }
+    function setChatState(isChatting) {
+        sendBtn.style.display = isChatting ? 'none' : 'block';
+        cancelBtn.style.display = isChatting ? 'block' : 'none';
+        contentInput.disabled = isChatting;
+    }
+    function endChatState() {
+        if (currentAgentBubble) {
+            currentAgentBubble.classList.remove('stream-cursor');
+            currentAgentBubble = null;
+            document.querySelectorAll('pre code').forEach((block) => { if(window.hljs) hljs.highlightElement(block); });
+        }
+        setChatState(false);
+        contentInput.focus();
+    }
+    function autoResizeTextarea(elem) {
+        elem.style.height = 'auto';
+        elem.style.height = elem.scrollHeight + 'px';
+    }
+    contentInput.addEventListener('input', function() { autoResizeTextarea(this); });
+    contentInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!sendBtn.disabled) sendBtn.click();
+        }
+    });
+
+    // ================= 6. 资源上传逻辑 =================
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultBox = document.getElementById('uploadResult');
+        resultBox.className = 'result-box';
+        resultBox.textContent = '上传中...';
+        resultBox.style.display = 'block';
+
+        const fileInput = document.getElementById('resFile');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const reqData = {
+            learningSpaceId: document.getElementById('resSpaceId').value,
+            title: document.getElementById('resTitle').value || file.name,
+            description: document.getElementById('resDesc').value,
+            sliceStrategy: parseInt(document.getElementById('resSliceStrategy').value)
+        };
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('request', new Blob([JSON.stringify(reqData)], { type: 'application/json' }));
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/resources/upload`, {
+                method: 'POST',
+                headers: { [SA_TOKEN_HEADER]: authToken },
+                body: formData
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                resultBox.className = 'result-box success';
+                resultBox.textContent = '上传成功！\n' + JSON.stringify(result.data, null, 2);
+            } else {
+                throw new Error(result.message || '上传失败');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: ' + err.message;
+        }
+    });
+
+    // ================= 7. 知识点创建逻辑 =================
+    // 注意：kpForm 和 relForm 在当前的 HTML 中不存在，因此移除相关事件监听
+    // 如果需要这些功能，请确保 HTML 中存在对应的表单元素
+    // 以下是示例代码，已被注释掉
+    /*
+    document.getElementById('kpForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultBox = document.getElementById('kpResult');
+        resultBox.className = 'result-box';
+        resultBox.textContent = '创建中...';
+        resultBox.style.display = 'block';
+
+        const payload = {
+            folderId: parseInt(document.getElementById('kpFolderId').value),
+            title: document.getElementById('kpTitle').value,
+            definition: document.getElementById('kpDefinition').value,
+            difficulty: parseFloat(document.getElementById('kpDifficulty').value)
+        };
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/knowledge/points`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                resultBox.className = 'result-box success';
+                resultBox.textContent = '创建成功！\n' + JSON.stringify(result.data, null, 2);
+            } else {
+                throw new Error(result.message || '创建失败');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: ' + err.message;
+        }
+    });
+
+    // ================= 8. 知识关系创建逻辑 =================
+    document.getElementById('relForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultBox = document.getElementById('relResult');
+        resultBox.className = 'result-box';
+        resultBox.textContent = '创建中...';
+        resultBox.style.display = 'block';
+
+        const payload = {
+            learningSpaceId: parseInt(document.getElementById('relSpaceId').value),
+            sourcePointId: parseInt(document.getElementById('relSourceId').value),
+            targetPointId: parseInt(document.getElementById('relTargetId').value),
+            relationType: document.getElementById('relType').value,
+            description: document.getElementById('relDesc').value
+        };
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/knowledge/relations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                resultBox.className = 'result-box success';
+                resultBox.textContent = '创建成功！\n' + JSON.stringify(result.data, null, 2);
+            } else {
+                throw new Error(result.message || '创建失败');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: ' + err.message;
+        }
+    });
+    */
+
+    // ================= 9. 知识图谱可视化 (演示) =================
+    function renderDemoGraph() {
+        const chartDom = document.getElementById('graphContainer');
+        if (!myChart) myChart = echarts.init(chartDom);
+
+        // 模拟数据
+        const data = [
+            { id: '1', name: 'Java基础', symbolSize: 50, category: 0 },
+            { id: '2', name: '面向对象', symbolSize: 40, category: 1 },
+            { id: '3', name: '集合框架', symbolSize: 40, category: 1 },
+            { id: '4', name: '多线程', symbolSize: 40, category: 1 },
+            { id: '5', name: '类与对象', symbolSize: 30, category: 2 },
+            { id: '6', name: '继承', symbolSize: 30, category: 2 },
+            { id: '7', name: 'List', symbolSize: 30, category: 2 },
+            { id: '8', name: 'Map', symbolSize: 30, category: 2 }
+        ];
+        const links = [
+            { source: '1', target: '2', name: '包含' },
+            { source: '1', target: '3', name: '包含' },
+            { source: '1', target: '4', name: '包含' },
+            { source: '2', target: '5', name: '组成' },
+            { source: '2', target: '6', name: '特性' },
+            { source: '3', target: '7', name: '接口' },
+            { source: '3', target: '8', name: '接口' }
+        ];
+
+        const option = {
+            title: { text: '知识图谱示例', top: 'bottom', left: 'right' },
+            tooltip: {},
+            legend: [{ data: ['根节点', '一级节点', '二级节点'] }],
+            animationDuration: 1500,
+            animationEasingUpdate: 'quinticInOut',
+            series: [
+                {
+                    name: '知识图谱',
+                    type: 'graph',
+                    layout: 'force',
+                    data: data.map(node => ({
+                        id: node.id,
+                        name: node.name,
+                        symbolSize: node.symbolSize,
+                        category: node.category,
+                        draggable: true
+                    })),
+                    links: links,
+                    categories: [{ name: '根节点' }, { name: '一级节点' }, { name: '二级节点' }],
+                    roam: true,
+                    label: { show: true, position: 'right', formatter: '{b}' },
+                    lineStyle: { color: 'source', curveness: 0.3 },
+                    force: { repulsion: 200, edgeLength: 100 }
+                }
+            ]
+        };
+        myChart.setOption(option);
+    }
+
+    // 窗口大小改变时重绘图表
+    window.addEventListener('resize', () => {
+        if (myChart) myChart.resize();
+    });
+
+    // ================= 11. 资源列表逻辑 =================
+    let currentResourceId = null;
+
+    async function loadResourceList() {
+        const container = document.getElementById('resourceListContainer');
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">加载中...</div>';
+
+        try {
+            const params = new URLSearchParams({ pageSize: 100, page: 1 });
+            if (currentLearningSpaceId) {
+                params.append('learningSpaceId', currentLearningSpaceId);
+            }
+
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/resource/query/page?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                const resources = result.data.results || result.data.records || [];
+                renderResourceList(resources);
+            } else {
+                container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">加载失败: ${result.message}</div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">错误: ${e.message}</div>`;
+        }
+    }
+
+    function renderResourceList(resources) {
+        const container = document.getElementById('resourceListContainer');
+        if (resources.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">暂无资源</div>';
+            return;
+        }
+
+        let html = `
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>标题</th>
+                        <th>类型</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        resources.forEach(res => {
+            const id = String(res.id || res.resourceId);
+            const typeMap = { 0: '手动', 1: '文件', 2: '链接', 3: 'AI搜索' };
+            const statusMap = { 0: '待处理', 1: '处理中', 2: '完成', 3: '失败' };
+
+            html += `
+                <tr>
+                    <td>${id.substring(id.length-6)}</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="loadChunkList('${id}', '${res.title}')" style="color:var(--primary-color); font-weight:500;">
+                            ${res.title || '无标题'}
+                        </a>
+                    </td>
+                    <td>${typeMap[res.type] || res.type}</td>
+                    <td>${statusMap[res.status] || res.status}</td>
+                    <td>${(res.createTime || '').replace('T', ' ').substring(0, 16)}</td>
+                    <td>
+                        <a class="action-link" onclick="editResource('${id}')">编辑</a>
+                        <a class="action-link danger" onclick="deleteResource('${id}')">删除</a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    async function editResource(id) {
+        const newTitle = prompt("请输入新的资源标题:");
+        if (newTitle === null) return;
+
+        const newDesc = prompt("请输入新的资源描述:");
+        if (newDesc === null) return;
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/resources/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify({ title: newTitle, description: newDesc })
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                alert("更新成功");
+                loadResourceList();
+            } else {
+                alert("更新失败: " + result.message);
+            }
+        } catch (e) {
+            alert("错误: " + e.message);
+        }
+    }
+
+    async function deleteResource(id) {
+        if (!confirm("确定要删除该资源吗？此操作不可恢复。")) return;
+
+        // 注意：后端目前可能未实现资源删除接口，这里尝试调用
+        try {
+            const res = await fetch(`${BASE_API_URL}/resources/${id}`, {
+                method: 'DELETE',
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            // 如果是 404 或 405，说明接口不存在
+            if (res.status === 404 || res.status === 405) {
+                alert("删除失败: 后端暂未支持资源删除接口");
+                return;
+            }
+
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                alert("删除成功");
+                loadResourceList();
+                if (currentResourceId === id) {
+                    document.getElementById('chunkListCard').style.display = 'none';
+                    currentResourceId = null;
+                }
+            } else {
+                alert("删除失败: " + result.message);
+            }
+        } catch (e) {
+            alert("错误: " + e.message);
+        }
+    }
+
+    // ================= 12. 分片列表逻辑 =================
+    async function loadChunkList(resourceId, title) {
+        currentResourceId = resourceId;
+        document.getElementById('currentResourceTitle').textContent = title || resourceId;
+        document.getElementById('chunkListCard').style.display = 'block';
+        refreshChunkList();
+    }
+
+    async function refreshChunkList() {
+        if (!currentResourceId) return;
+        const container = document.getElementById('chunkListContainer');
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">加载中...</div>';
+
+        try {
+            const params = new URLSearchParams({ resourceId: currentResourceId, pageSize: 100, page: 1 });
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/resource/query/chunks/page?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                const chunks = result.data.results || result.data.records || [];
+                renderChunkList(chunks);
+            } else {
+                container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">加载失败: ${result.message}</div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<div style="text-align:center; color:red; padding:20px;">错误: ${e.message}</div>`;
+        }
+    }
+
+    function renderChunkList(chunks) {
+        const container = document.getElementById('chunkListContainer');
+        if (chunks.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">暂无分片</div>';
+            return;
+        }
+
+        let html = `
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>内容预览</th>
+                        <th>Token数</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        chunks.forEach(chunk => {
+            const id = String(chunk.id || chunk.chunkId);
+            const statusMap = { 0: '待向量化', 1: '向量化中', 2: '完成', 3: '失败' };
+
+            html += `
+                <tr>
+                    <td>${id.substring(id.length-6)}</td>
+                    <td><div class="chunk-content" title="${(chunk.content || '').replace(/"/g, '"')}">${chunk.content || ''}</div></td>
+                    <td>${chunk.tokenCount || '-'}</td>
+                    <td>${statusMap[chunk.vectorStatus] || chunk.vectorStatus}</td>
+                    <td>
+                        <a class="action-link" onclick="editChunk('${id}')">编辑</a>
+                        <a class="action-link danger" onclick="deleteChunk('${id}')">删除</a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    async function editChunk(id) {
+        // 先获取详情以拿到完整内容
+        try {
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/resource/query/chunks/detail/${id}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            if (!ok || (result.code !== 200 && result.code !== "200000")) {
+                alert("获取分片详情失败");
+                return;
+            }
+
+            const oldContent = result.data.content;
+            // 使用 prompt 可能不适合大段文本，但在简单测试页面中暂且如此，或者自定义模态框
+            // 这里为了简单，使用 prompt，但提示用户可能显示不全
+            const newContent = prompt("编辑分片内容:", oldContent);
+            if (newContent === null || newContent === oldContent) return;
+
+            const res = await fetch(`${BASE_API_URL}/resources/chunks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify({ content: newContent })
+            });
+            const updateResult = await res.json();
+
+            if (res.ok && (updateResult.code === 200 || updateResult.code === "200000")) {
+                alert("更新成功");
+                refreshChunkList();
+            } else {
+                alert("更新失败: " + updateResult.message);
+            }
+        } catch (e) {
+            alert("错误: " + e.message);
+        }
+    }
+
+    async function deleteChunk(id) {
+        if (!confirm("确定要删除该分片吗？")) return;
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/resources/chunks/${id}`, {
+                method: 'DELETE',
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+            const result = await res.json();
+
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                alert("删除成功");
+                refreshChunkList();
+            } else {
+                alert("删除失败: " + result.message);
+            }
+        } catch (e) {
+            alert("错误: " + e.message);
+        }
+    }
+
+    // ================= 新增：知识图谱AI生成与管理 =================
+
+    // 模拟任务进度（实际应用中应通过轮询或WebSocket获取真实进度）
+    function simulateTaskProgress(taskId) {
+        let progress = 10;
+        const interval = setInterval(() => {
+            progress += 10;
+            if (progress >= 90) {
+                clearInterval(interval);
+                document.getElementById('aiTaskStatusText').textContent = '处理中...';
+                // 实际应在此处查询任务状态，这里假设任务完成
+                setTimeout(() => {
+                    document.getElementById('aiTaskStatusText').textContent = '已完成';
+                    document.getElementById('aiTaskProgressBar').style.width = '100%';
+                    // 3秒后隐藏状态
+                    setTimeout(() => {
+                        document.getElementById('aiTaskStatus').style.display = 'none';
+                    }, 3000);
+                }, 2000);
+            } else {
+                document.getElementById('aiTaskProgressBar').style.width = progress + '%';
+            }
+        }, 500);
+    }
+
+    // 取消任务
+    document.getElementById('aiCancelBtn').addEventListener('click', () => {
+        if (confirm('确定要取消任务吗？')) {
+            document.getElementById('aiTaskStatusText').textContent = '已取消';
+            document.getElementById('aiTaskProgressBar').style.width = '0%';
+            setTimeout(() => {
+                document.getElementById('aiTaskStatus').style.display = 'none';
+            }, 2000);
+        }
+    });
+
+    // 加载知识图谱列表 - 调用AI生成知识图谱接口
+    window.loadKnowledgeGraphs = async function() {
+        const container = document.getElementById('knowledgeGraphsList');
+        container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">提交知识图谱生成任务...</div>';
+        
+        if (!authToken) {
+            container.innerHTML = '<div style="text-align:center; color:red; padding:20px;">请先登录</div>';
+            return;
+        }
+
+        if (!currentLearningSpaceId) {
+            container.innerHTML = '<div style="text-align:center; color:red; padding:20px;">请先选择学习空间</div>';
+            return;
+        }
+
+        try {
+            // 构建AI生成请求，使用默认提示词
+            const payload = {
+                prompt: "请为我生成一个关于Java编程基础的知识图谱，包括核心概念、语法特性、常用类库等",
+                targetDepositId: 0, // 根目录
+                isVirtual: false,
+                learningSpaceId: currentLearningSpaceId
+            };
+
+            // 调用AI生成知识图谱接口
+            const response = await fetch(`${BASE_API_URL}/knowledge-ai/generate-knowledge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 || result.code === "200000") {
+                    const taskId = result.data;
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:20px;">
+                            <div style="color:#4caf50; margin-bottom:10px;">✓ 知识图谱生成任务已提交</div>
+                            <div style="font-size:0.9em; color:#666; margin-bottom:10px;">任务ID: ${taskId}</div>
+                            <div style="font-size:0.8em; color:#999;">任务正在后台处理，请稍后查看结果。</div>
+                            <div style="margin-top:15px; padding:10px; background:#f8f9fa; border-radius:4px; font-size:0.8em;">
+                                <div>提示：</div>
+                                <div>1. 知识图谱生成需要一些时间，请耐心等待</div>
+                                <div>2. 生成完成后，可以使用页面上的AI生成表单查看其他生成选项</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.message || '任务提交失败');
+                }
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        } catch (e) {
+            console.error('提交知识图谱生成任务失败:', e);
+            container.innerHTML = `
+                <div style="text-align:center; color:red; padding:20px;">
+                    提交失败: ${e.message}
+                    <div style="margin-top:10px; font-size:0.8em; color:#666;">
+                        请检查后端服务是否正常，或使用页面上的AI生成表单进行生成。
+                    </div>
+                </div>
+            `;
+        }
+    };
+
+    // 修改"从数据库生成知识图谱"按钮功能，改为提交AI生成任务
+    window.generateGraphFromDatabaseData = async function() {
+        if (!authToken) {
+            alert('请先登录');
+            return;
+        }
+
+        if (!currentLearningSpaceId) {
+            alert('请先选择学习空间');
+            return;
+        }
+
+        const chartDom = document.getElementById('graphContainer');
+        if (!myChart) myChart = echarts.init(chartDom);
+        myChart.showLoading();
+
+        try {
+            // 构建AI生成请求，使用默认提示词
+            const payload = {
+                prompt: "请为我生成一个关于Java编程基础的知识图谱，包括核心概念、语法特性、常用类库等",
+                targetDepositId: 0, // 根目录
+                isVirtual: false,
+                learningSpaceId: currentLearningSpaceId
+            };
+
+            // 调用AI生成知识图谱接口
+            const response = await fetch(`${BASE_API_URL}/knowledge-ai/generate-knowledge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.code === 200 || result.code === "200000") {
+                    const taskId = result.data;
+                    
+                    // 更新图谱详情
+                    document.getElementById('graphDetails').style.display = 'block';
+                    document.getElementById('graphDetailsContent').innerHTML = `
+                        <p><strong>任务状态:</strong> 已提交</p>
+                        <p><strong>任务ID:</strong> ${taskId}</p>
+                        <p><strong>生成时间:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>提示词:</strong> ${payload.prompt}</p>
+                        <p><strong>数据源:</strong> AI生成</p>
+                    `;
+                    
+                    // 更新当前图谱信息
+                    document.getElementById('currentGraphInfo').textContent = 'AI生成任务已提交';
+                    document.getElementById('deleteGraphBtn').style.display = 'none';
+                    
+                    alert(`知识图谱生成任务已提交！任务ID: ${taskId}\n任务正在后台处理，请稍后查看结果。`);
+                } else {
+                    throw new Error(result.message || '任务提交失败');
+                }
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        } catch (e) {
+            console.error('提交知识图谱生成任务失败:', e);
+            alert('提交知识图谱生成任务失败: ' + e.message);
+        } finally {
+            myChart.hideLoading();
+        }
+    };
+
+    // 修改Tab切换时的行为：如果切换到知识图谱标签，且没有图表实例，则初始化图表（但不渲染演示数据）
+    // 我们将原来的switchTab函数中关于knowledge的部分修改为只初始化图表，不自动渲染演示数据。
+    // 由于原函数已经定义，我们无法直接修改，所以我们在后面重新定义switchTab函数，但这可能会导致冲突。
+    // 因此，我们改为在tab切换时，如果是knowledge，则初始化图表，并加载图谱列表。
+    // 我们覆盖原来的switchTab函数
+    const originalSwitchTab = window.switchTab;
+    window.switchTab = function(tabName) {
+        originalSwitchTab(tabName);
+        if (tabName === 'knowledge') {
+            // 初始化图表容器，但不渲染演示数据
+            if (!myChart) {
+                const chartDom = document.getElementById('graphContainer');
+                myChart = echarts.init(chartDom);
+                // 加载知识图谱列表
+                loadKnowledgeGraphs();
+            }
+        }
+    };
+
+    // ================= 新增：知识图谱页面的资源与文件夹管理 =================
+
+    // 加载资源列表到下拉选择框
+    async function loadResourceListForSelect() {
+        const select = document.getElementById('aiResourceSelect');
+        select.innerHTML = '<option value="">请选择资源</option>';
+        
+        if (!authToken) {
+            alert('请先登录');
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ pageSize: 100, page: 1 });
+            if (currentLearningSpaceId) {
+                params.append('learningSpaceId', currentLearningSpaceId);
+            }
+
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/resource/query/page?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                const resources = result.data.results || result.data.records || [];
+                resources.forEach(res => {
+                    const id = String(res.id || res.resourceId);
+                    const title = res.title || '无标题';
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = title;
+                    select.appendChild(option);
+                });
+                if (resources.length > 0) {
+                    alert(`已加载 ${resources.length} 个资源`);
+                } else {
+                    alert('暂无资源');
+                }
+            } else {
+                alert('加载资源列表失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('加载资源列表错误: ' + e.message);
+        }
+    }
+
+    // 加载文件夹列表到下拉选择框
+    async function loadFolderList() {
+        const select = document.getElementById('aiFolderSelect');
+        const originalValue = select.value;
+        select.innerHTML = '<option value="0">根目录</option>';
+        
+        if (!authToken) {
+            alert('请先登录');
+            return;
+        }
+
+        if (!currentLearningSpaceId) {
+            alert('请先选择学习空间');
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ learningSpaceId: currentLearningSpaceId });
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/knowledge/folders?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                const folders = result.data || [];
+                folders.forEach(folder => {
+                    const id = String(folder.id || folder.folderId);
+                    const name = folder.name || '未命名文件夹';
+                    const depth = folder.depth || 0;
+                    const prefix = '&nbsp;'.repeat(depth * 4) + (depth > 0 ? '└ ' : '');
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.innerHTML = prefix + name;
+                    select.appendChild(option);
+                });
+                
+                // 尝试恢复原来的选择
+                if (originalValue) {
+                    select.value = originalValue;
+                }
+                
+                if (folders.length > 0) {
+                    // 不弹出提示，避免干扰
+                } else {
+                    // 没有文件夹，默认就是根目录
+                }
+            } else {
+                alert('加载文件夹列表失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('加载文件夹列表错误: ' + e.message);
+        }
+    }
+
+    // 显示创建文件夹模态框
+    function showCreateFolderModal() {
+        const modalHtml = `
+            <div id="createFolderModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+                <div style="background:white; padding:20px; border-radius:8px; width:400px; max-width:90%;">
+                    <h3 style="margin-top:0;">创建新文件夹</h3>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px;">文件夹名称</label>
+                        <input type="text" id="newFolderName" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;" placeholder="请输入文件夹名称">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px;">父文件夹</label>
+                        <select id="newFolderParent" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                            <option value="0">根目录</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <button onclick="document.getElementById('createFolderModal').remove()" style="padding:8px 16px; background:#6c757d; color:white; border:none; border-radius:4px; cursor:pointer;">取消</button>
+                        <button onclick="createFolder()" style="padding:8px 16px; background:var(--primary-color); color:white; border:none; border-radius:4px; cursor:pointer;">创建</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 移除可能已存在的模态框
+        const existingModal = document.getElementById('createFolderModal');
+        if (existingModal) existingModal.remove();
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // 加载父文件夹列表
+        setTimeout(() => {
+            const parentSelect = document.getElementById('newFolderParent');
+            // 复制现有的文件夹列表
+            const folderSelect = document.getElementById('aiFolderSelect');
+            if (folderSelect) {
+                parentSelect.innerHTML = '<option value="0">根目录</option>';
+                for (let i = 1; i < folderSelect.options.length; i++) {
+                    const option = folderSelect.options[i].cloneNode(true);
+                    parentSelect.appendChild(option);
+                }
+            }
+        }, 100);
+    }
+
+    // 创建文件夹
+    async function createFolder() {
+        const folderName = document.getElementById('newFolderName').value;
+        const parentId = document.getElementById('newFolderParent').value;
+        
+        if (!folderName) {
+            alert('请输入文件夹名称');
+            return;
+        }
+        
+        if (!currentLearningSpaceId) {
+            alert('请先选择学习空间');
+            return;
+        }
+
+        try {
+            const payload = {
+                name: folderName,
+                learningSpaceId: currentLearningSpaceId,
+                parentId: parentId === "0" ? null : parseInt(parentId)
+            };
+            
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/knowledge/folders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                alert('文件夹创建成功');
+                document.getElementById('createFolderModal').remove();
+                // 重新加载文件夹列表
+                await loadFolderList();
+            } else {
+                alert('创建文件夹失败: ' + (result.message || '未知错误'));
+            }
+        } catch (e) {
+            alert('创建文件夹错误: ' + e.message);
+        }
+    }
+
+    // 修改AI生成表单提交逻辑，适配新的下拉框
+    async function handleAiGenerateSubmit(e) {
+        if (e) {
+            e.preventDefault();
+        }
+        const resultBox = document.getElementById('aiGenerateResult');
+        resultBox.className = 'result-box';
+        resultBox.textContent = '提交中...';
+        resultBox.style.display = 'block';
+
+        const spaceId = document.getElementById('aiSpaceId').value;
+        const resourceSelect = document.getElementById('aiResourceSelect');
+        const resourceId = resourceSelect.value;
+        const prompt = document.getElementById('aiPrompt').value;
+        const folderSelect = document.getElementById('aiFolderSelect');
+        const folderId = folderSelect.value === "0" ? 0 : parseInt(folderSelect.value);
+        const mode = document.getElementById('aiMode').value;
+
+        // 通用验证：prompt不能为空
+        if (!prompt || prompt.trim() === '') {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: 提示词不能为空';
+            return;
+        }
+
+        // 验证逻辑
+        if (mode === 'FROM_RESOURCE' && !resourceId) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: 从资源生成模式需要选择资源';
+            return;
+        }
+
+        if (mode === 'FROM_PROMPT' && !prompt) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: 从提示词生成模式需要填写提示词';
+            return;
+        }
+
+        if (mode === 'EXPAND_EXISTING' && !resourceId && !prompt) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: 扩展现有知识点模式需要选择资源或填写提示词';
+            return;
+        }
+
+        // 构建符合后端接口的参数
+        const payload = {
+            prompt: prompt,
+            targetDepositId: folderId,
+            isVirtual: false
+        };
+
+        if (resourceId) {
+            payload.resourceId = resourceId;
+        }
+        // chunkIds 可选，暂不提供
+
+        try {
+            const res = await fetch(`${BASE_API_URL}/knowledge-ai/generate-knowledge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok && (result.code === 200 || result.code === "200000")) {
+                const taskId = result.data;
+                resultBox.className = 'result-box success';
+                resultBox.textContent = `任务提交成功！任务ID: ${taskId}\n知识图谱生成中，请稍后刷新列表查看。`;
+                // 显示任务状态跟踪
+                document.getElementById('aiTaskStatus').style.display = 'block';
+                document.getElementById('aiTaskStatusText').textContent = '已提交';
+                document.getElementById('aiTaskProgressBar').style.width = '10%';
+                // 模拟进度更新
+                simulateTaskProgress(taskId);
+            } else {
+                throw new Error(result.message || '提交失败');
+            }
+        } catch (err) {
+            resultBox.className = 'result-box error';
+            resultBox.textContent = '错误: ' + err.message;
+        }
+    }
+
+    document.getElementById('aiGenerateForm').addEventListener('submit', handleAiGenerateSubmit);
+    document.getElementById('aiGenerateButton').addEventListener('click', handleAiGenerateSubmit);
+
+    // 渲染知识图谱统计信息和生成按钮
+    function renderKnowledgeGraphsStats(points, relations) {
+        const container = document.getElementById('knowledgeGraphsList');
+        if (points.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">暂无知识点</div>';
+            return;
+        }
+
+        const statsHtml = `
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div style="background: #e8f0fe; padding: 10px 15px; border-radius: 6px; flex: 1; margin-right: 10px;">
+                        <div style="font-size: 0.9em; color: #666;">知识点数量</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #007bff;">${points.length}</div>
+                    </div>
+                    <div style="background: #e8f5e9; padding: 10px 15px; border-radius: 6px; flex: 1; margin-left: 10px;">
+                        <div style="font-size: 0.9em; color: #666;">关系数量</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #4caf50;">${relations.length}</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn" onclick="generateGraphFromDatabaseData()" style="width: 100%; padding: 10px; font-size: 1em;">
+                        📊 从数据库生成知识图谱
+                    </button>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 8px;">
+                        使用已加载的 ${points.length} 个知识点和 ${relations.length} 条关系生成可视化图谱
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = statsHtml;
+    }
+
+    // 从数据库中的数据生成图谱
+    async function generateGraphFromDatabaseData() {
+        if (!window.knowledgePoints || window.knowledgePoints.length === 0) {
+            alert('请先点击"刷新列表"加载知识点数据');
+            return;
+        }
+
+        const chartDom = document.getElementById('graphContainer');
+        if (!myChart) myChart = echarts.init(chartDom);
+        myChart.showLoading();
+
+        try {
+            // 使用已加载的数据
+            const points = window.knowledgePoints;
+            const relations = window.knowledgeRelations;
+            
+            // 构建节点数据
+            const nodes = points.map((point, index) => {
+                const pointId = String(point.id || point.kpId || point.kpId);
+                const title = point.title || point.kpTitle || `知识点${index + 1}`;
+                const definition = point.definition || point.kpDefinition || '';
+                const explanation = point.explanation || point.kpExplanation || '';
+                
+                return {
+                    id: pointId,
+                    name: title,
+                    value: {
+                        title: title,
+                        definition: definition,
+                        explanation: explanation,
+                        id: pointId
+                    },
+                    category: 0,
+                    symbolSize: 30 + (index % 5) * 5,
+                    draggable: true,
+                    label: {
+                        show: true,
+                        formatter: title.length > 10 ? title.substring(0, 8) + '...' : title,
+                        position: 'right'
+                    },
+                    tooltip: {
+                        formatter: function(params) {
+                            const data = params.data.value;
+                            return `
+                                <div style="max-width: 300px;">
+                                    <h4>${data.title}</h4>
+                                    ${data.definition ? `<p><strong>定义：</strong>${data.definition}</p>` : ''}
+                                    ${data.explanation ? `<p><strong>解释：</strong>${data.explanation}</p>` : ''}
+                                    <p><small>ID: ${data.id}</small></p>
+                                </div>
+                            `;
+                        }
+                    }
+                };
+            });
+
+            // 构建边数据
+            const edges = relations.map(relation => {
+                const sourceId = String(relation.sourcePointId || relation.kprSourcePointId || '');
+                const targetId = String(relation.targetPointId || relation.kprTargetPointId || '');
+                const relationType = relation.relationType || relation.kprRelationType || '关系';
+                const description = relation.description || relation.kprDescription || '';
+                
+                return {
+                    source: sourceId,
+                    target: targetId,
+                    label: {
+                        show: true,
+                        formatter: relationType.length > 8 ? relationType.substring(0, 6) + '...' : relationType
+                    },
+                    lineStyle: {
+                        color: '#aaa',
+                        curveness: 0.3
+                    },
+                    value: {
+                        type: relationType,
+                        description: description
+                    }
+                };
+            }).filter(edge => {
+                // 过滤掉源或目标不存在的边
+                return edge.source && edge.target && 
+                       nodes.some(node => node.id === edge.source) && 
+                       nodes.some(node => node.id === edge.target);
+            });
+
+            // 设置图表选项
+            const option = {
+                title: {
+                    text: '知识图谱 (从数据库生成)',
+                    subtext: `共 ${nodes.length} 个节点，${edges.length} 条关系`,
+                    top: 'top',
+                    left: 'center'
+                },
+                tooltip: {},
+                legend: [{
+                    data: ['知识点'],
+                    selected: { '知识点': true }
+                }],
+                animationDuration: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [{
+                    name: '知识图谱',
+                    type: 'graph',
+                    layout: 'force',
+                    data: nodes,
+                    links: edges,
+                    categories: [{
+                        name: '知识点'
+                    }],
+                    roam: true,
+                    label: {
+                        show: true,
+                        position: 'right',
+                        formatter: '{b}'
+                    },
+                    lineStyle: {
+                        color: 'source',
+                        curveness: 0.3
+                    },
+                    force: {
+                        repulsion: 200,
+                        edgeLength: 100
+                    },
+                    emphasis: {
+                        focus: 'adjacency',
+                        lineStyle: {
+                            width: 3
+                        }
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+            myChart.hideLoading();
+            
+            // 更新图谱详情
+            document.getElementById('graphDetails').style.display = 'block';
+            document.getElementById('graphDetailsContent').innerHTML = `
+                <p><strong>图谱来源:</strong> 数据库实时数据</p>
+                <p><strong>生成时间:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>节点数:</strong> ${nodes.length}</p>
+                <p><strong>关系数:</strong> ${edges.length}</p>
+                <p><strong>有效关系:</strong> ${edges.length} (过滤掉 ${relations.length - edges.length} 个无效引用)</p>
+                <p><strong>数据源:</strong> 学习空间 ID: ${currentLearningSpaceId || '未选择'}</p>
+            `;
+            
+            // 更新当前图谱信息
+            document.getElementById('currentGraphInfo').textContent = '数据库实时生成图谱';
+            document.getElementById('deleteGraphBtn').style.display = 'none';
+            
+            alert(`图谱生成成功！共 ${nodes.length} 个知识点，${edges.length} 条关系`);
+        } catch (e) {
+            console.error('生成图谱失败:', e);
+            alert('生成图谱失败: ' + e.message);
+            myChart.hideLoading();
+        }
+    }
+
+    // 页面加载完成后，自动加载资源列表和文件夹列表（如果已登录）
+    document.addEventListener('DOMContentLoaded', function() {
+        // 稍后检查登录状态并加载数据
+        setTimeout(() => {
+            if (authToken && currentLearningSpaceId) {
+                loadResourceListForSelect();
+                loadFolderList();
+            }
+        }, 1000);
+        
+        // 初始化学习规划面板
+        initLearningPlanPanel();
+    });
+
+    // ================= 新增：学习规划面板功能 =================
+    
+    // 学习规划面板状态
+    let isPlanPanelCollapsed = false;
+    let learningTasks = [];
+    let currentTaskIndex = -1;
+    
+    // 初始化学习规划面板
+    function initLearningPlanPanel() {
+        const toggleBtn = document.getElementById('togglePlanPanel');
+        const panel = document.getElementById('learningPlanPanel');
+        
+        if (toggleBtn && panel) {
+            toggleBtn.addEventListener('click', () => {
+                isPlanPanelCollapsed = !isPlanPanelCollapsed;
+                if (isPlanPanelCollapsed) {
+                    panel.classList.add('collapsed');
+                    toggleBtn.innerHTML = '▶';
+                    toggleBtn.title = '展开';
+                } else {
+                    panel.classList.remove('collapsed');
+                    toggleBtn.innerHTML = '▼';
+                    toggleBtn.title = '折叠';
+                }
+            });
+        }
+        
+        // 初始化示例学习任务（实际应用中应从后端获取）
+        updateLearningPlanWithExampleData();
+    }
+    
+    // 从后端API获取学习规划数据
+    async function fetchLearningTasksFromBackend(sessionId) {
+        if (!authToken || !sessionId) {
+            console.error('未登录或无会话ID');
+            return [];
+        }
+
+        try {
+            // 构建查询参数
+            const params = new URLSearchParams({
+                sessionId: sessionId,
+                pageSize: 100,
+                page: 1
+            });
+
+            // 调用学习任务查询API
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/agent/query/learning-tasks?${params}`, {
+                headers: { [SA_TOKEN_HEADER]: authToken }
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                // 处理返回的数据结构
+                let tasks = [];
+                if (result.data && result.data.results) {
+                    tasks = result.data.results;
+                } else if (result.data && result.data.records) {
+                    tasks = result.data.records;
+                } else if (result.data && Array.isArray(result.data)) {
+                    tasks = result.data;
+                }
+
+                // 转换为前端需要的格式
+                return tasks.map(task => ({
+                    id: task.id,
+                    title: task.title || '无标题',
+                    description: task.objective || '无描述',
+                    completed: task.isCompleted || false,
+                    isCurrent: false, // 由前端计算当前任务
+                    difficultyLevel: task.difficultyLevel,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt
+                }));
+            } else {
+                console.error('获取学习任务失败:', result?.message || '未知错误');
+                return [];
+            }
+        } catch (e) {
+            console.error('获取学习任务异常:', e);
+            return [];
+        }
+    }
+
+    // 更新学习任务完成状态
+    async function updateLearningTaskCompletion(taskId, completed) {
+        if (!authToken) {
+            console.error('未登录');
+            return false;
+        }
+
+        try {
+            const payload = {
+                isCompleted: completed
+            };
+
+            const { ok, json: result } = await fetchWithBigInt(`${BASE_API_URL}/agent/learning-tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [SA_TOKEN_HEADER]: authToken },
+                body: JSON.stringify(payload)
+            });
+
+            if (ok && (result.code === 200 || result.code === "200000")) {
+                return true;
+            } else {
+                console.error('更新学习任务失败:', result?.message || '未知错误');
+                return false;
+            }
+        } catch (e) {
+            console.error('更新学习任务异常:', e);
+            return false;
+        }
+    }
+
+    // 更新学习规划数据（从后端获取真实数据）
+    async function updateLearningPlanWithRealData(sessionId) {
+        // 从后端获取学习任务
+        const tasks = await fetchLearningTasksFromBackend(sessionId);
+        
+        learningTasks = tasks;
+        
+        // 找到当前任务的索引
+        currentTaskIndex = -1;
+        if (learningTasks.length > 0) {
+            // 如果有未完成的任务，第一个未完成的任务设为当前
+            const firstIncompleteIndex = learningTasks.findIndex(task => !task.completed);
+            if (firstIncompleteIndex !== -1) {
+                currentTaskIndex = firstIncompleteIndex;
+                learningTasks[currentTaskIndex].isCurrent = true;
+            } else {
+                // 如果所有任务都已完成，则将最后一个任务设为当前
+                currentTaskIndex = learningTasks.length - 1;
+                learningTasks[currentTaskIndex].isCurrent = true;
+            }
+        }
+        
+        renderLearningTasks();
+    }
+    
+    // 渲染学习任务列表
+    function renderLearningTasks() {
+        const taskList = document.getElementById('planTaskList');
+        const progressBar = document.getElementById('planProgressBar');
+        const progressText = document.getElementById('planProgressText');
+        const currentTaskEl = document.getElementById('planCurrentTask');
+        
+        if (!taskList) return;
+        
+        // 清空现有列表
+        taskList.innerHTML = '';
+        
+        // 计算进度
+        const completedCount = learningTasks.filter(task => task.completed).length;
+        const totalCount = learningTasks.length;
+        const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+        
+        // 更新进度条和文本
+        if (progressBar) {
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+        if (progressText) {
+            progressText.textContent = `${completedCount}/${totalCount}`;
+        }
+        
+        // 更新当前任务显示
+        if (currentTaskEl && currentTaskIndex >= 0 && currentTaskIndex < learningTasks.length) {
+            const currentTask = learningTasks[currentTaskIndex];
+            currentTaskEl.textContent = currentTask.title;
+        }
+        
+        // 根据折叠状态决定显示哪些任务
+        let tasksToShow = [];
+        if (isPlanPanelCollapsed) {
+            // 折叠状态：只显示当前任务，如果都完成则显示最后一个任务
+            if (currentTaskIndex >= 0 && currentTaskIndex < learningTasks.length) {
+                tasksToShow = [learningTasks[currentTaskIndex]];
+            } else if (learningTasks.length > 0) {
+                tasksToShow = [learningTasks[learningTasks.length - 1]];
+            }
+        } else {
+            // 展开状态：显示所有任务
+            tasksToShow = [...learningTasks];
+        }
+        
+        // 渲染任务列表
+        tasksToShow.forEach(task => {
+            const taskItem = document.createElement('li');
+            taskItem.className = `plan-task-item ${task.completed ? 'completed' : ''} ${task.isCurrent ? 'current' : ''}`;
+            taskItem.dataset.taskId = task.id;
+            
+            // 创建任务状态图标
+            const statusIcon = document.createElement('div');
+            statusIcon.className = `task-status ${task.completed ? 'completed' : 'pending'}`;
+            statusIcon.innerHTML = task.completed ? '✓' : '';
+            
+            // 创建任务内容
+            const taskContent = document.createElement('div');
+            taskContent.className = 'task-content';
+            
+            const taskTitle = document.createElement('div');
+            taskTitle.className = 'task-title';
+            taskTitle.textContent = task.title;
+            
+            const taskDesc = document.createElement('div');
+            taskDesc.className = 'task-desc';
+            taskDesc.textContent = task.description;
+            
+            taskContent.appendChild(taskTitle);
+            taskContent.appendChild(taskDesc);
+            
+            // 组装任务项
+            taskItem.appendChild(statusIcon);
+            taskItem.appendChild(taskContent);
+            
+            // 添加点击事件
+            taskItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleTaskCompletion(task.id);
+            });
+            
+            taskList.appendChild(taskItem);
+        });
+        
+        // 如果折叠状态下没有任务可显示，显示提示
+        if (isPlanPanelCollapsed && tasksToShow.length === 0) {
+            const emptyItem = document.createElement('li');
+            emptyItem.className = 'plan-task-item';
+            emptyItem.innerHTML = '<div class="task-content"><div class="task-title">暂无学习任务</div></div>';
+            taskList.appendChild(emptyItem);
+        }
+    }
+    
+    // 切换任务完成状态
+    function toggleTaskCompletion(taskId) {
+        const taskIndex = learningTasks.findIndex(task => task.id === taskId);
+        if (taskIndex === -1) return;
+        
+        // 切换完成状态
+        learningTasks[taskIndex].completed = !learningTasks[taskIndex].completed;
+        
+        // 如果当前任务已完成，并且不是最后一个任务，则自动切换到下一个未完成的任务
+        if (learningTasks[taskIndex].completed && learningTasks[taskIndex].isCurrent) {
+            learningTasks[taskIndex].isCurrent = false;
+            
+            // 找到下一个未完成的任务
+            let nextTaskIndex = -1;
+            for (let i = taskIndex + 1; i < learningTasks.length; i++) {
+                if (!learningTasks[i].completed) {
+                    nextTaskIndex = i;
+                    break;
+                }
+            }
+            
+            // 如果后面没有未完成的任务，则向前找
+            if (nextTaskIndex === -1) {
+                for (let i = 0; i < taskIndex; i++) {
+                    if (!learningTasks[i].completed) {
+                        nextTaskIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // 如果找到了下一个任务，设为当前任务
+            if (nextTaskIndex !== -1) {
+                learningTasks[nextTaskIndex].isCurrent = true;
+                currentTaskIndex = nextTaskIndex;
+            } else {
+                // 如果所有任务都已完成，则将当前任务设为最后一个任务
+                currentTaskIndex = learningTasks.length - 1;
+                learningTasks[currentTaskIndex].isCurrent = true;
+            }
+        }
+        
+        // 重新渲染任务列表
+        renderLearningTasks();
+    }
+    
+    // 更新学习规划数据（从后端获取当前会话的学习规划）
+    async function updateLearningPlanForSession(sessionId) {
+        // 从后端API获取真实学习规划数据
+        await updateLearningPlanWithRealData(sessionId);
+    }
+    
+    // 在切换会话时更新学习规划
+    const originalSwitchSession = window.switchSession;
+    window.switchSession = function(sessionId, element) {
+        originalSwitchSession(sessionId, element);
+        updateLearningPlanForSession(sessionId);
+    };
+    
+    // 在新会话创建时初始化学习规划
+    newChatBtn.addEventListener('click', async function() {
+        // 先执行原有的新建会话逻辑
+        const originalClick = newChatBtn.onclick;
+        if (originalClick) {
+            await originalClick();
+        }
+        
+        // 更新学习规划 - 使用真实数据
+        setTimeout(() => {
+            const sessionId = currentSessionIdInput.value;
+            if (sessionId) {
+                updateLearningPlanForSession(sessionId);
+            }
+        }, 500);
+    });
+
+    // 修改切换任务完成状态，调用后端API
+    async function toggleTaskCompletion(taskId) {
+        const taskIndex = learningTasks.findIndex(task => task.id === taskId);
+        if (taskIndex === -1) return;
+        
+        // 获取当前完成状态
+        const currentCompleted = learningTasks[taskIndex].completed;
+        const newCompleted = !currentCompleted;
+        
+        // 调用后端API更新完成状态
+        const success = await updateLearningTaskCompletion(taskId, newCompleted);
+        
+        if (success) {
+            // 更新本地状态
+            learningTasks[taskIndex].completed = newCompleted;
+            
+            // 如果当前任务已完成，并且不是最后一个任务，则自动切换到下一个未完成的任务
+            if (learningTasks[taskIndex].completed && learningTasks[taskIndex].isCurrent) {
+                learningTasks[taskIndex].isCurrent = false;
+                
+                // 找到下一个未完成的任务
+                let nextTaskIndex = -1;
+                for (let i = taskIndex + 1; i < learningTasks.length; i++) {
+                    if (!learningTasks[i].completed) {
+                        nextTaskIndex = i;
+                        break;
+                    }
+                }
+                
+                // 如果后面没有未完成的任务，则向前找
+                if (nextTaskIndex === -1) {
+                    for (let i = 0; i < taskIndex; i++) {
+                        if (!learningTasks[i].completed) {
+                            nextTaskIndex = i;
+                            break;
+                        }
+                    }
+                }
+                
+                // 如果找到了下一个任务，设为当前任务
+                if (nextTaskIndex !== -1) {
+                    learningTasks[nextTaskIndex].isCurrent = true;
+                    currentTaskIndex = nextTaskIndex;
+                } else {
+                    // 如果所有任务都已完成，则将当前任务设为最后一个任务
+                    currentTaskIndex = learningTasks.length - 1;
+                    learningTasks[currentTaskIndex].isCurrent = true;
+                }
+            }
+            
+            // 重新渲染任务列表
+            renderLearningTasks();
+        } else {
+            console.error('更新任务完成状态失败');
+        }
+    }
+
+</script>
+</body>
+</html>

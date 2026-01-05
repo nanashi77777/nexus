@@ -1,0 +1,674 @@
+{
+  "documentTitle": "Backend API View Object (VO) Design",
+  "version": "1.0",
+  "lastUpdated": "2025-07-30",
+  "generalPrinciples": {
+    "description": "Core rules governing all API responses.",
+    "principles": [
+      {
+        "name": "Response Wrapper",
+        "details": "All API responses, without exception, will be wrapped in the 'ResultVO<T>' object, providing a consistent structure with 'code', 'message', and 'data' fields."
+      },
+      {
+        "name": "Pagination Wrapper",
+        "details": "For endpoints returning lists, the 'data' field within 'ResultVO' will be a 'PageResult<T>' object, providing standardized pagination details ('records', 'total', 'pageNum', 'pageSize', etc.)."
+      },
+      {
+        "name": "Field Exclusion Policy",
+        "details": "Sensitive or internal fields are never exposed. This includes all '*DeletedAt' fields, 'uaPassword', internal system identifiers like 'rcVectorId', and raw JSON configuration strings unless explicitly required and structured."
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "User & Account Management",
+      "description": "Handles user information.",
+      "viewObjects": [
+        {
+          "name": "UserVO",
+          "description": "Provides essential, non-sensitive information about a user. Used for displaying the current logged-in user's profile or an author's details.",
+          "fusedEntities": [
+            "UserAccountEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique user identifier, from uaId."
+            },
+            {
+              "name": "username",
+              "type": "String",
+              "description": "User's public username, from uaUsername."
+            },
+            {
+              "name": "email",
+              "type": "String",
+              "description": "User's email address, from uaEmail."
+            },
+            {
+              "name": "phone",
+              "type": "String",
+              "description": "User's phone number, from uaPhone."
+            },
+            {
+              "name": "inviteCode",
+              "type": "String",
+              "description": "User's unique invitation code, from uaInviteCode."
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "The timestamp when the user account was created, from uaCreatedAt."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Learning Space Management",
+      "description": "A Learning Space is the primary container for a user's content, acting as a workspace.",
+      "viewObjects": [
+        {
+          "name": "LearningSpaceSimpleVO",
+          "description": "A lightweight object for displaying a list of learning spaces, e.g., on a dashboard.",
+          "fusedEntities": [
+            "LearningSpaceEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique learning space identifier, from lsId."
+            },
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Name of the learning space, from lsName."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "A brief description of the space, from lsDescription."
+            },
+            {
+              "name": "coverImageUrl",
+              "type": "String",
+              "description": "URL for the space's cover image, from lsCoverImageUrl."
+            },
+            {
+              "name": "updatedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of the last update, from lsUpdatedAt."
+            }
+          ]
+        },
+        {
+          "name": "LearningSpaceDetailVO",
+          "description": "Provides the full details of a single learning space.",
+          "fusedEntities": [
+            "LearningSpaceEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique learning space identifier, from lsId."
+            },
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Name of the learning space, from lsName."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "A brief description of the space, from lsDescription."
+            },
+            {
+              "name": "coverImageUrl",
+              "type": "String",
+              "description": "URL for the space's cover image, from lsCoverImageUrl."
+            },
+            {
+              "name": "spacePrompt",
+              "type": "String",
+              "description": "Global AI reference prompt for this space, from lsSpacePrompt."
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of creation, from lsCreatedAt."
+            },
+            {
+              "name": "updatedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of the last update, from lsUpdatedAt."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Resource Management",
+      "description": "Handles user-uploaded source materials like PDFs, documents, etc.",
+      "viewObjects": [
+        {
+          "name": "ResourceSimpleVO",
+          "description": "A lightweight object for listing resources within a learning space.",
+          "fusedEntities": [
+            "ResourceEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique resource identifier, from rsId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "The title of the resource, from rsTitle."
+            },
+            {
+              "name": "sourceType",
+              "type": "Integer",
+              "description": "The origin type of the resource, from rsSourceType.",
+              "notes": "Enum Mapping: 0 = UPLOAD, 1 = LINK, 2 = AI_GENERATED"
+            },
+            {
+              "name": "status",
+              "type": "Integer",
+              "description": "The current processing status of the resource, from rsStatus.",
+              "notes": "Enum Mapping: 0 = PENDING_PARSE, 1 = PARSING, 2 = PARSE_COMPLETED, 3 = PARSE_FAILED"
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of creation, from rsCreatedAt."
+            }
+          ]
+        },
+        {
+          "name": "ResourceDetailVO",
+          "description": "Provides full details about a single resource, including error information if parsing failed.",
+          "fusedEntities": [
+            "ResourceEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique resource identifier, from rsId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "The title of the resource, from rsTitle."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "AI-searchable description, from rsDescription."
+            },
+            {
+              "name": "sourceType",
+              "type": "Integer",
+              "description": "The origin type of the resource, from rsSourceType.",
+              "notes": "Enum Mapping: 0 = UPLOAD, 1 = LINK, 2 = AI_GENERATED"
+            },
+            {
+              "name": "sourceUri",
+              "type": "String",
+              "description": "The source URI (file path, URL, etc.), from rsSourceUri."
+            },
+            {
+              "name": "prompt",
+              "type": "String",
+              "description": "AI-searchable prompt, from rsPrompt."
+            },
+            {
+              "name": "status",
+              "type": "Integer",
+              "description": "The current processing status, from rsStatus.",
+              "notes": "Enum Mapping: 0 = PENDING_PARSE, 1 = PARSING, 2 = PARSE_COMPLETED, 3 = PARSE_FAILED"
+            },
+            {
+              "name": "parseErrorMessage",
+              "type": "String",
+              "description": "Error message if parsing failed, from rsParseErrorMessage."
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of creation, from rsCreatedAt."
+            },
+            {
+              "name": "updatedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of the last update, from rsUpdatedAt."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Base",
+      "description": "The core module for user-managed, structured knowledge.",
+      "viewObjects": [
+        {
+          "name": "KnowledgeFolderVO",
+          "description": "Represents a folder in the knowledge base tree structure.",
+          "fusedEntities": [
+            "KnowledgeFolderEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique folder identifier, from kfId."
+            },
+            {
+              "name": "parentId",
+              "type": "Long",
+              "description": "Identifier of the parent folder, from kfParentId."
+            },
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Name of the folder, from kfName."
+            },
+            {
+              "name": "level",
+              "type": "Integer",
+              "description": "The nesting level of the folder (0-5), from kfLevel."
+            }
+          ]
+        },
+        {
+          "name": "KnowledgePointSummaryVO",
+          "description": "A summary view of a knowledge point for display in lists or trees. It combines the main point with its current active version to get the title.",
+          "fusedEntities": [
+            "KnowledgePointEntity (kp)",
+            "KnowledgePointVersionEntity (kpv)"
+          ],
+          "joinConditions": "kp.kpCurrentVersionId = kpv.kpvId",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique knowledge point identifier, from kp.kpId."
+            },
+            {
+              "name": "folderId",
+              "type": "Long",
+              "description": "The folder this point belongs to, from kp.kpFolderId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "The title of the current version of the knowledge point, from kpv.kpvTitle."
+            },
+            {
+              "name": "updatedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of the last update to the point, from kp.kpUpdatedAt."
+            }
+          ]
+        },
+        {
+          "name": "KnowledgePointDetailVO",
+          "description": "The complete view of a single knowledge point, showing all content from its current version.",
+          "fusedEntities": [
+            "KnowledgePointEntity (kp)",
+            "KnowledgePointVersionEntity (kpv)"
+          ],
+          "joinConditions": "kp.kpCurrentVersionId = kpv.kpvId",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique knowledge point identifier, from kp.kpId."
+            },
+            {
+              "name": "folderId",
+              "type": "Long",
+              "description": "The folder this point belongs to, from kp.kpFolderId."
+            },
+            {
+              "name": "versionId",
+              "type": "Long",
+              "description": "The ID of the currently active version, from kp.kpCurrentVersionId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "Title of the content, from kpv.kpvTitle."
+            },
+            {
+              "name": "definition",
+              "type": "String",
+              "description": "The definition of the knowledge point, from kpv.kpvDefinition."
+            },
+            {
+              "name": "explanation",
+              "type": "String",
+              "description": "The detailed explanation, from kpv.kpvExplanation."
+            },
+            {
+              "name": "formulaOrCode",
+              "type": "String",
+              "description": "A code snippet or formula, from kpv.kpvFormulaOrCode."
+            },
+            {
+              "name": "example",
+              "type": "String",
+              "description": "A practical example, from kpv.kpvExample."
+            },
+            {
+              "name": "difficulty",
+              "type": "BigDecimal",
+              "description": "The difficulty rating, from kpv.kpvDifficulty."
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp when this version was created, from kpv.kpvCreatedAt."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Explanation Document (AI-Generated Content)",
+      "description": "Handles the structured documents generated by the AI.",
+      "viewObjects": [
+        {
+          "name": "ExplanationDocumentSummaryVO",
+          "description": "A lightweight object for listing all generated documents.",
+          "fusedEntities": [
+            "ExplanationDocumentEntity"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique document identifier, from edId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "The title of the document, from edTitle."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "A brief description of the document, from edDescription."
+            },
+            {
+              "name": "status",
+              "type": "Integer",
+              "description": "The current status of the document, from edStatus.",
+              "notes": "Enum Mapping: 0 = DRAFT, 1 = AI_GENERATING, 2 = NORMAL, 3 = AI_GENERATE_FAILED"
+            },
+            {
+              "name": "updatedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp of the last update, from edUpdatedAt."
+            }
+          ]
+        },
+        {
+          "name": "ExplanationDocumentDetailVO",
+          "description": "The main, comprehensive VO for displaying a full explanation document. This is a complex, nested object assembled by the backend service.",
+          "fusedEntities": [
+            "ExplanationDocumentEntity",
+            "ExplanationSectionEntity",
+            "ExplanationSubsectionEntity",
+            "ExplanationPointEntity",
+            "ExplanationRelationEntity"
+          ],
+          "joinConditions": "Backend service will fetch all components where the foreign key matches the document ID (e.g., esExplanationDocumentId = edId) and assemble the nested structure.",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Document identifier, from edId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "Document title, from edTitle."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "Document description, from edDescription."
+            },
+            {
+              "name": "status",
+              "type": "Integer",
+              "description": "Document status, from edStatus.",
+              "notes": "Enum Mapping: 0 = DRAFT, 1 = AI_GENERATING, 2 = NORMAL, 3 = AI_GENERATE_FAILED"
+            },
+            {
+              "name": "sectionOrder",
+              "type": "List<Long>",
+              "description": "Ordered list of section IDs, from edSectionOrder."
+            },
+            {
+              "name": "sections",
+              "type": "List<ExplanationSectionVO>",
+              "description": "A list of all sections in the document."
+            },
+            {
+              "name": "points",
+              "type": "List<ExplanationPointVO>",
+              "description": "A list of all knowledge points defined in the document."
+            },
+            {
+              "name": "relations",
+              "type": "List<ExplanationRelationVO>",
+              "description": "A list of all relations between knowledge points."
+            }
+          ]
+        },
+        {
+          "name": "ExplanationSectionVO",
+          "description": "Nested VO for a Section within a document.",
+          "fusedEntities": [
+            "ExplanationSectionEntity"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Section identifier, from esId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "Section title, from esTitle."
+            },
+            {
+              "name": "content",
+              "type": "String",
+              "description": "Section content (Markdown), from esContent."
+            },
+            {
+              "name": "subsections",
+              "type": "List<ExplanationSubsectionVO>",
+              "description": "A list of all subsections within this section, ordered by the backend."
+            }
+          ]
+        },
+        {
+          "name": "ExplanationSubsectionVO",
+          "description": "Nested VO for a Subsection within a section.",
+          "fusedEntities": [
+            "ExplanationSubsectionEntity"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Subsection identifier, from essId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "Subsection title, from essTitle."
+            },
+            {
+              "name": "content",
+              "type": "String",
+              "description": "Subsection content (Markdown), from essContent."
+            }
+          ]
+        },
+        {
+          "name": "ExplanationPointVO",
+          "description": "Nested VO for a Knowledge Point within the explanation document's context.",
+          "fusedEntities": [
+            "ExplanationPointEntity"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Point identifier, from epId."
+            },
+            {
+              "name": "title",
+              "type": "String",
+              "description": "Point title, from epTitle."
+            },
+            {
+              "name": "definition",
+              "type": "String",
+              "description": "Point definition, from epDefinition."
+            },
+            {
+              "name": "explanation",
+              "type": "String",
+              "description": "Point explanation, from epExplanation."
+            },
+            {
+              "name": "formulaOrCode",
+              "type": "String",
+              "description": "Formula or code snippet, from epFormulaOrCode."
+            },
+            {
+              "name": "example",
+              "type": "String",
+              "description": "A practical example, from epExample."
+            },
+            {
+              "name": "styleConfig",
+              "type": "String",
+              "description": "JSON string for graph node rendering, from epStyleConfig."
+            }
+          ]
+        },
+        {
+          "name": "ExplanationRelationVO",
+          "description": "Nested VO for a Relation between points in the document's context.",
+          "fusedEntities": [
+            "ExplanationRelationEntity"
+          ],
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Relation identifier, from erId."
+            },
+            {
+              "name": "sourcePointId",
+              "type": "Long",
+              "description": "ID of the source point, from erSourcePointId."
+            },
+            {
+              "name": "targetPointId",
+              "type": "Long",
+              "description": "ID of the target point, from erTargetPointId."
+            },
+            {
+              "name": "relationType",
+              "type": "String",
+              "description": "Type of the relation (e.g., 'prerequisite'), from erRelationType."
+            },
+            {
+              "name": "description",
+              "type": "String",
+              "description": "Description of the relation, from erDescription."
+            },
+            {
+              "name": "styleConfig",
+              "type": "String",
+              "description": "JSON string for graph edge rendering, from erStyleConfig."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Asynchronous Task Tracking",
+      "description": "Provides frontend visibility into the status of long-running backend jobs.",
+      "viewObjects": [
+        {
+          "name": "AsyncTaskVO",
+          "description": "A simple object to show the status and result of a background task.",
+          "fusedEntities": [
+            "AsyncTask"
+          ],
+          "joinConditions": "N/A",
+          "fields": [
+            {
+              "name": "id",
+              "type": "Long",
+              "description": "Unique task identifier, from atId."
+            },
+            {
+              "name": "taskType",
+              "type": "String",
+              "description": "The type of the task being executed, from atTaskType."
+            },
+            {
+              "name": "status",
+              "type": "Integer",
+              "description": "The current status of the task, from atStatus.",
+              "notes": "Enum Mapping from TaskStatusEnum: 0 = PENDING, 1 = RUNNING, 2 = SUCCEEDED, 3 = FAILED, 4 = CANCELED"
+            },
+            {
+              "name": "userFriendlyMessage",
+              "type": "String",
+              "description": "A message suitable for display to the user, from atUserFriendlyMessage."
+            },
+            {
+              "name": "createdAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp when the task was created, from atCreatedAt."
+            },
+            {
+              "name": "startedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp when the task started execution, from atStartedAt."
+            },
+            {
+              "name": "finishedAt",
+              "type": "LocalDateTime",
+              "description": "Timestamp when the task completed, from atFinishedAt."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

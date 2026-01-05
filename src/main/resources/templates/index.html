@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS知因 - 智能学习系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script th:inline="javascript">
+        // 获取当前用户ID（从后端Session获取）
+        const currentUserId = /*[[${#session.getAttribute('loginId')}]]*/ null;
+        const currentUsername = /*[[${#session.getAttribute('username')}]]*/ '用户';
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>NEXUS知因</h1>
+                <span class="tagline">智能学习系统</span>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="active" data-tab="learning-space"><i class="fas fa-layer-group"></i> 学习空间</li>
+                    <li data-tab="knowledge-graph"><i class="fas fa-project-diagram"></i> 知识图谱</li>
+                    <li data-tab="agent-chat"><i class="fas fa-robot"></i> 智能体对话</li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <span class="user-name" id="current-username">加载中...</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 学习空间管理界面 -->
+            <section id="learning-space" class="tab-content active">
+                <div class="workspace-layout">
+                    <!-- 左侧导航栏：学习空间列表 -->
+                    <aside class="sidebar-left">
+                        <div class="sidebar-header">
+                            <h3><i class="fas fa-space-shuttle"></i> 学习空间</h3>
+                            <button class="btn-create" id="create-space-btn">
+                                <i class="fas fa-plus"></i> 新建
+                            </button>
+                        </div>
+                        <div class="space-list" id="space-list">
+                            <!-- 学习空间列表将通过JavaScript动态加载 -->
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i> 加载学习空间...
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- 主内容区：资源列表和知识图谱 -->
+                    <div class="main-area">
+                        <div class="main-header">
+                            <h2 id="current-space-title">选择学习空间</h2>
+                            <div class="search-bar">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="resource-search" placeholder="搜索资源...">
+                            </div>
+                        </div>
+                        <div class="resource-list">
+                            <h3><i class="fas fa-file-alt"></i> 资源列表</h3>
+                            <div class="resource-items" id="resource-items">
+                                <div class="empty-state">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>选择一个学习空间以查看资源</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="knowledge-preview">
+                            <h3><i class="fas fa-project-diagram"></i> 知识图谱预览</h3>
+                            <div class="graph-placeholder" id="learning-space-graph">
+                                <div class="placeholder-text">
+                                    <p>知识图谱可视化区域</p>
+                                    <p>点击节点查看详细信息</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧工具栏 -->
+                    <aside class="sidebar-right">
+                        <div class="toolbar">
+                            <h3><i class="fas fa-tools"></i> 快速操作</h3>
+                            <div class="toolbar-buttons">
+                                <button class="btn-toolbar" id="upload-btn">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    上传文件
+                                </button>
+                                <button class="btn-toolbar" id="create-folder-btn">
+                                    <i class="fas fa-folder-plus"></i>
+                                    新建文件夹
+                                </button>
+                                <button class="btn-toolbar" id="share-space-btn">
+                                    <i class="fas fa-share-alt"></i>
+                                    分享空间
+                                </button>
+                                <button class="btn-toolbar" id="space-settings-btn">
+                                    <i class="fas fa-cog"></i>
+                                    空间设置
+                                </button>
+                            </div>
+                        </div>
+                        <div class="recent-activity">
+                            <h3><i class="fas fa-history"></i> 最近活动</h3>
+                            <ul id="recent-activity-list">
+                                <li>加载中...</li>
+                            </ul>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2023 NEXUS知因 智能学习系统 | 遵循 WCAG 2.1 可访问性标准 | 响应式设计支持 PC、平板和移动端</p>
+        </footer>
+    </div>
+
+    <!-- 模态框：创建新空间 -->
+    <div class="modal" id="create-space-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> 创建新学习空间</h3>
+                <button class="btn-close" id="close-create-space-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-space-form">
+                    <div class="form-group">
+                        <label for="space-name">空间名称</label>
+                        <input type="text" id="space-name" placeholder="输入空间名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="space-description">空间描述</label>
+                        <textarea id="space-description" rows="3" placeholder="描述这个学习空间的内容"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="space-visibility">可见性</label>
+                        <select id="space-visibility">
+                            <option value="private">私有（仅自己可见）</option>
+                            <option value="shared">共享（指定用户可见）</option>
+                            <option value="public">公开（所有用户可见）</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-create-space">取消</button>
+                <button class="btn-primary" id="submit-create-space">创建空间</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        // 页面初始化脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            // 更新用户名显示
+            if (currentUsername && currentUsername !== '用户') {
+                document.getElementById('current-username').textContent = currentUsername;
+            } else {
+                // 如果Thymeleaf变量未设置，通过API获取用户信息
+                fetch('/api/v1/users/query/basic', {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200 && data.data) {
+                        document.getElementById('current-username').textContent = data.data.username || '用户';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('current-username').textContent = '用户';
+                });
+            }
+
+            // 加载学习空间数据
+            loadLearningSpaces();
+        });
+
+        async function loadLearningSpaces() {
+            try {
+                const response = await fetch('/api/v1/learning-space/query/my?page=1&size=10', {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.code === 200 && result.data) {
+                        renderSpaceList(result.data.records || []);
+                    }
+                }
+            } catch (error) {
+                console.error('加载学习空间失败:', error);
+                document.getElementById('space-list').innerHTML = 
+                    '<div class="error-message">加载失败，请刷新页面重试</div>';
+            }
+        }
+
+        function renderSpaceList(spaces) {
+            const spaceList = document.getElementById('space-list');
+            if (!spaces || spaces.length === 0) {
+                spaceList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-plus"></i>
+                        <p>暂无学习空间</p>
+                        <button class="btn-create" id="create-first-space">创建第一个空间</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            spaces.forEach((space, index) => {
+                html += `
+                    <div class="space-item ${index === 0 ? 'active' : ''}" data-space-id="${space.id}">
+                        <i class="fas fa-${space.icon || 'folder'}"></i>
+                        <span>${space.name || '未命名空间'}</span>
+                        <span class="space-count">${space.resourceCount || 0}</span>
+                    </div>
+                `;
+            });
+
+            spaceList.innerHTML = html;
+            
+            // 添加点击事件
+            document.querySelectorAll('.space-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.space-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const spaceId = this.getAttribute('data-space-id');
+                    const spaceName = this.querySelector('span:nth-child(2)').textContent;
+                    
+                    document.getElementById('current-space-title').textContent = spaceName;
+                    loadSpaceResources(spaceId);
+                    loadSpaceActivities(spaceId);
+                });
+            });
+
+            // 默认加载第一个空间的数据
+            if (spaces.length > 0) {
+                const firstSpaceId = spaces[0].id;
+                const firstName = spaces[0].name || '未命名空间';
+                document.getElementById('current-space-title').textContent = firstName;
+                loadSpaceResources(firstSpaceId);
+                loadSpaceActivities(firstSpaceId);
+            }
+        }
+
+        async function loadSpaceResources(spaceId) {
+            try {
+                const response = await fetch(`/api/v1/resource/query/page?learningSpaceId=${spaceId}&page=1&size=10`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.code === 200 && result.data) {
+                        renderResourceList(result.data.records || []);
+                    }
+                }
+            } catch (error) {
+                console.error('加载资源失败:', error);
+                document.getElementById('resource-items').innerHTML = 
+                    '<div class="error-message">加载资源失败</div>';
+            }
+        }
+
+        function renderResourceList(resources) {
+            const resourceItems = document.getElementById('resource-items');
+            
+            if (!resources || resources.length === 0) {
+                resourceItems.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-upload"></i>
+                        <p>暂无资源</p>
+                        <button class="btn-toolbar" id="upload-first-resource">上传第一个资源</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            resources.forEach(resource => {
+                const icon = getFileIcon(resource.fileType);
+                const size = formatFileSize(resource.fileSize);
+                const date = resource.createTime ? new Date(resource.createTime).toLocaleDateString() : '未知日期';
+                
+                html += `
+                    <div class="resource-item" data-resource-id="${resource.id}">
+                        <div class="resource-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="resource-info">
+                            <h4>${resource.name || '未命名资源'}</h4>
+                            <p>上传于 ${date} • 大小: ${size}</p>
+                        </div>
+                        <div class="resource-actions">
+                            <button class="btn-icon" title="预览"><i class="fas fa-eye"></i></button>
+                            <button class="btn-icon" title="下载"><i class="fas fa-download"></i></button>
+                            <button class="btn-icon" title="更多"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resourceItems.innerHTML = html;
+        }
+
+        async function loadSpaceActivities(spaceId) {
+            try {
+                // 这里应该调用活动记录的API，但如果没有，可以使用模拟数据
+                const activities = [
+                    '最近上传了文件',
+                    '更新了空间设置',
+                    '分享了空间给其他用户'
+                ];
+                
+                const list = document.getElementById('recent-activity-list');
+                list.innerHTML = '';
+                activities.forEach(activity => {
+                    const li = document.createElement('li');
+                    li.textContent = activity;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('加载活动记录失败:', error);
+            }
+        }
+
+        function getFileIcon(fileType) {
+            const iconMap = {
+                'pdf': 'fas fa-file-pdf',
+                'doc': 'fas fa-file-word',
+                'docx': 'fas fa-file-word',
+                'mp4': 'fas fa-file-video',
+                'avi': 'fas fa-file-video',
+                'mov': 'fas fa-file-video',
+                'py': 'fas fa-file-code',
+                'java': 'fas fa-file-code',
+                'js': 'fas fa-file-code',
+                'html': 'fas fa-file-code',
+                'css': 'fas fa-file-code',
+                'txt': 'fas fa-file-alt',
+                'default': 'fas fa-file'
+            };
+            
+            if (!fileType) return iconMap.default;
+            
+            const ext = fileType.toLowerCase();
+            for (const [key, icon] of Object.entries(iconMap)) {
+                if (ext.includes(key)) {
+                    return icon;
+                }
+            }
+            
+            return iconMap.default;
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

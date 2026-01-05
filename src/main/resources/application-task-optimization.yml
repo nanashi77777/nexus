@@ -1,0 +1,38 @@
+# 任务模块优化配置
+# 任务模块优化配置
+nexus:
+  task:
+    enabled: true
+    
+    # 轮询配置
+    polling:
+      interval: 3  # 减少轮询间隔，提高响应速度
+      unit: SECONDS
+      batch-size: 15  # 增加批次大小，提高吞吐量
+    
+    # 短时任务执行器配置（虚拟线程）
+    short-running:
+      concurrency: 300  # 增加并发数，利用虚拟线程优势
+    
+    # 长时任务执行器配置（平台线程）
+    long-running:
+      core-pool-size: 6  # 增加核心线程数
+      max-pool-size: 20  # 增加最大线程数
+      keep-alive-time: 120  # 增加线程存活时间
+      queue-capacity: 200  # 增加队列容量
+    
+    # 任务类型映射（长时间任务）
+    mapping:
+      long-running:
+        - "AI_DOCUMENT_GENERATION"
+        - "EXPLANATION_AI_GENERATE"
+        - "KNOWLEDGE_AI_GENERATE"
+        - "BATCH_DATA_PROCESS"
+        - "LARGE_FILE_PROCESS"
+    
+    # 超时配置
+    timeout:
+      enabled: true
+      default-duration: 25  # 增加默认超时时间
+      default-unit: MINUTES
+      check-interval-seconds: 30  # 减少检查间隔，提高响应速度

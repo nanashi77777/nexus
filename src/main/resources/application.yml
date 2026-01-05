@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: nexus-server
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/nexus_v1?currentSchema=public&stringtype=unspecified
+#    username: postgres
+#    password: Lin037...
+    username: nexus
+    password: lpf050713.
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 2
+      password: nanashi007...
+  #      password: Lin037...
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 1833340239@qq.com
+    password: aguihrzrlqkxcdhb
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true  # 使用SSL而不是TLS
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
+        transport:
+          protocol: smtp
+  #        debug: true  # 开发环境可以开启调试
+  config:
+    # 导入外部配置配置
+    import: classpath:application-ai-model.yml, classpath:application-sa-token.yml, classpath:application-snowflake.yml, classpath:application-task.yml
+
+# Nexus应用配置
+nexus:
+  # 文件存储配置
+  file:
+    storage:
+      # 文件存储路径，建议直接使用无前缀的相对路径，如：file-storage
+      path: file-storage
+  notification:
+    email:
+      from: NEXUS知因团队<1833340239@qq.com>
+
+logging:
+  file:
+    name: nexus.log
+    path: logs
+
+mybatis:
+  configuration:
+    database-id: PGSQL
+
+server:
+  port: 8088

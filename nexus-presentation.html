@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS知因 - 项目汇报答辩</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/black.min.css" id="theme">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/monokai.min.css">
+    <style>
+        .reveal .slides {
+            text-align: left;
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-align: center;
+        }
+        .reveal .slide-number {
+            font-size: 20px;
+        }
+        .reveal .footer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 18px;
+            color: #ccc;
+        }
+        .reveal .blue {
+            color: #0078D4;
+        }
+        .reveal .gray {
+            color: #2D2D30;
+        }
+        .reveal .white {
+            color: #fff;
+        }
+        .reveal .left {
+            text-align: left;
+        }
+        .reveal .center {
+            text-align: center;
+        }
+        .reveal .right {
+            text-align: right;
+        }
+        .reveal .small {
+            font-size: 0.8em;
+        }
+        .reveal .medium {
+            font-size: 0.9em;
+        }
+        .reveal .large {
+            font-size: 1.2em;
+        }
+        .reveal .xlarge {
+            font-size: 1.5em;
+        }
+        .reveal .code-block {
+            background: #2D2D30;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow: auto;
+        }
+        .reveal .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .reveal .two-columns .col {
+            flex: 1;
+            padding: 0 10px;
+        }
+        .reveal .three-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .reveal .three-columns .col {
+            flex: 1;
+            padding: 0 10px;
+        }
+        .reveal .architecture-img {
+            width: 80%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        .reveal .screenshot {
+            width: 90%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+            border: 2px solid #0078D4;
+            border-radius: 10px;
+        }
+        .reveal .note {
+            font-size: 0.7em;
+            color: #aaa;
+            font-style: italic;
+        }
+        .reveal .highlight {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- 封面 -->
+            <section>
+                <h1 class="blue">NEXUS知因</h1>
+                <h3>企业级智能知识管理平台</h3>
+                <p class="large">项目汇报答辩</p>
+                <p>汇报人：[填写汇报人姓名]</p>
+                <p>指导老师/所属部门：[填写指导老师或部门]</p>
+                <p>日期：[填写汇报日期]</p>
+                <div class="footer">NEXUS Project Presentation</div>
+            </section>
+
+            <!-- 第1页：选题意义 -->
+            <section>
+                <section>
+                    <h2>选题意义 - 智能学习的时代挑战</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">痛点分析</h3>
+                            <ul>
+                                <li>知识碎片化，学习缺乏系统性</li>
+                                <li>传统工具难以提供个性化学习支持</li>
+                                <li>学习过程缺乏持续跟踪与记忆强化</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">项目价值</h3>
+                            <ul>
+                                <li>构建AI驱动的学习伴侣</li>
+                                <li>实现知识的结构化管理与智能检索</li>
+                                <li>提供持续的学习进度跟踪与记忆强化</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">数据支撑</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>指标</th>
+                                <th>现有平台</th>
+                                <th>NEXUS目标</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>响应时间</td>
+                                <td>5秒</td>
+                                <td><span class="highlight"><1秒</span></td>
+                            </tr>
+                            <tr>
+                                <td>用户流失率</td>
+                                <td>40% (缺乏个性化)</td>
+                                <td><span class="highlight"><20%</span></td>
+                            </tr>
+                            <tr>
+                                <td>个性化推荐准确率</td>
+                                <td>60%</td>
+                                <td><span class="highlight">>85%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+
+            <!-- 第2页：需求分析 -->
+            <section>
+                <section>
+                    <h2>需求分析 - 核心功能与性能要求</h2>
+                    <h3 class="blue">功能性需求</h3>
+                    <ol>
+                        <li>智能体对话：普通聊天与学习会话</li>
+                        <li>知识管理：知识图谱、文件夹、节点</li>
+                        <li>资源管理：多格式文档解析与向量化</li>
+                        <li>用户系统：注册登录、权限隔离</li>
+                        <li>讲解生成：AI生成结构化讲解</li>
+                    </ol>
+                </section>
+                <section>
+                    <h3 class="blue">非功能性需求</h3>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h4>性能</h4>
+                            <p>响应时间 <1秒</p>
+                            <p>支持1000并发</p>
+                        </div>
+                        <div class="col">
+                            <h4>可用性</h4>
+                            <p>99.9%可用</p>
+                            <p>支持故障转移</p>
+                        </div>
+                        <div class="col">
+                            <h4>安全性</h4>
+                            <p>数据隔离、加密存储、权限控制</p>
+                        </div>
+                        <div class="col">
+                            <h4>可扩展性</h4>
+                            <p>模块化设计，支持插件扩展</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 第3页：技术选型 -->
+            <section>
+                <section>
+                    <h2>技术选型 - 为什么选择这些技术</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">后端核心</h3>
+                            <ul>
+                                <li>Java 21 + Spring Boot 3：企业级稳定性与性能</li>
+                                <li>六边形架构：业务与技术彻底解耦</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">数据存储</h3>
+                            <ul>
+                                <li>PostgreSQL + PGVector：关系型与向量数据库一体化</li>
+                                <li>Redis：高性能缓存与分布式锁</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">AI集成</h3>
+                            <ul>
+                                <li>LangChain4j：统一的大模型交互接口</li>
+                                <li>Apache Tika：多格式文档解析</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">安全框架</h3>
+                            <ul>
+                                <li>Sa-Token：轻量级权限认证</li>
+                                <li>BCrypt + AES：密码与数据加密</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">前端</h3>
+                            <ul>
+                                <li>Vue 3 + TypeScript：现代化前端开发体验</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">构建工具</h3>
+                            <ul>
+                                <li>Gradle (Kotlin DSL)：高效构建</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 第4页：总体架构 -->
+            <section>
+                <section>
+                    <h2>总体架构 - 六边形架构设计</h2>
+                    <div class="center">
+                        <img src="https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEQ7XG4gICAgQXBwW0FwcGxpY2F0aW9uIExheWVyXVxuICAgIEluZltJbmZyYXN0cnVjdHVyZSBMYXllcl1cbiAgICBXZWJbV2ViIExheWVyXVxuICAgIENvbW1bQ29tbW9uIExheWVyXVxuICAgIEFwcCAtLT4gSW5mXG4gICAgV2ViIC0tPiBBcHBcbiAgICBJbmYgLS0-IENvbW1cbiAgICBXZWIgLS0-IENvbW1cbiAgICBBcHAgLS0-IENvbW0iLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ" alt="六边形架构图" class="architecture-img">
+                        <p class="note">注：此处应替换为项目实际架构图</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">四层架构</h3>
+                    <ol>
+                        <li><span class="highlight">应用层</span>：纯净业务逻辑，定义端口</li>
+                        <li><span class="highlight">基础设施层</span>：技术实现，提供适配器</li>
+                        <li><span class="highlight">表现层</span>：REST API，处理HTTP请求</li>
+                        <li><span class="highlight">公共层</span>：工具、常量、异常</li>
+                    </ol>
+                </section>
+                <section>
+                    <h3 class="blue">核心优势</h3>
+                    <ul>
+                        <li><span class="highlight">业务与技术解耦</span>：技术栈可灵活替换</li>
+                        <li><span class="highlight">依赖指向内部</span>：保证核心业务纯净</li>
+                        <li><span class="highlight">模块化设计</span>：各领域独立开发部署</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第5页：核心模块设计 -->
+            <section>
+                <section>
+                    <h2>核心模块设计 - 七大功能领域</h2>
+                    <div class="three-columns">
+                        <div class="col">
+                            <h4 class="blue">智能体模块</h4>
+                            <p>对话、记忆、学习任务管理</p>
+                        </div>
+                        <div class="col">
+                            <h4 class="blue">资源管理模块</h4>
+                            <p>文档解析、向量化、AI生成</p>
+                        </div>
+                        <div class="col">
+                            <h4 class="blue">知识管理模块</h4>
+                            <p>知识图谱、文件夹、节点</p>
+                        </div>
+                    </div>
+                    <div class="three-columns">
+                        <div class="col">
+                            <h4 class="blue">用户管理模块</h4>
+                            <p>认证、权限、个人资料</p>
+                        </div>
+                        <div class="col">
+                            <h4 class="blue">讲解生成模块</h4>
+                            <p>AI生成结构化讲解</p>
+                        </div>
+                        <div class="col">
+                            <h4 class="blue">数据隔离模块</h4>
+                            <p>多租户数据隔离</p>
+                        </div>
+                    </div>
+                    <div class="three-columns">
+                        <div class="col">
+                            <h4 class="blue">基础设施模块</h4>
+                            <p>AI、缓存、文件、任务等通用服务</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 第6页：数据库设计 -->
+            <section>
+                <section>
+                    <h2>数据库设计 - 核心表关系</h2>
+                    <div class="center">
+                        <img src="https://mermaid.ink/img/eyJjb2RlIjoiZXJEaWFncmFtXG4gICAgdXNlcl9hY2NvdW50cyB8fC0tb3sgdXNlcl9wcm9maWxlcyA6IFwiaGFzXCIgXG4gICAgdXNlcl9hY2NvdW50cyB8fC0tb3sgcmVzb3VyY2VzIDogXCJvd25zXCIgXG4gICAgcmVzb3VyY2VzIHx8LS1veyByZXNvdXJjZV9jaHVua3MgOiBcImNvbnRhaW5zXCIgXG4gICAgdXNlcl9hY2NvdW50cyB8fC0tb3sgYWdlbnRfY2hhdF9zZXNzaW9ucyA6IFwiY3JlYXRlc1wiIFxuICAgIGFnZW50X2NoYXRfc2Vzc2lvbnMgfHwtLW97IGFnZW50X21lbW9yaWVzIDogXCJnZW5lcmF0ZXNcIiBcbiAgICB1c2VyX2FjY291bnRzIHx8LS1veyBrbm93bGVkZ2VfcG9pbnRzIDogXCJjcmVhdGVzXCIgXG4gICAgS05PV0xFREdFX0RPTUFJTiA8fC0tb3sgS05PV0xFREdFX0dSQVBIIFxuICAgIEtOT1dMRURHRV9HUkFQSCB8fC0tb3sgR1JBUEhfTk9ERVMgOiBcImNvbnRhaW5zXCIgXG4gICAgR1JBUEhfTk9ERVMgfHwtLW97IEdSQVBIX0VER0VTIDogXCJjb25uZWN0c1wiIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0" alt="ER图" class="architecture-img">
+                        <p class="note">注：此处应替换为项目实际ER图</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">核心表</h3>
+                    <div class="two-columns">
+                        <div class="col">
+                            <ul>
+                                <li><span class="highlight">用户域</span>：user_accounts、user_profiles</li>
+                                <li><span class="highlight">资源域</span>：resources、resource_chunks</li>
+                                <li><span class="highlight">知识域</span>：knowledge_points、knowledge_graphs</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <ul>
+                                <li><span class="highlight">智能体域</span>：agent_chat_sessions、agent_memories</li>
+                                <li><span class="highlight">任务域</span>：tasks、task_executions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">设计特点</h3>
+                    <ul>
+                        <li><span class="highlight">雪花算法</span>生成全局唯一ID</li>
+                        <li><span class="highlight">学习空间ID</span>实现数据隔离</li>
+                        <li><span class="highlight">版本控制</span>支持知识演进</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第7页：关键流程图 -->
+            <section>
+                <section>
+                    <h2>关键流程图 - 文档解析与向量化</h2>
+                    <div class="center">
+                        <img src="https://mermaid.ink/img/eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gICAgcGFydGljaXBhbnQgVXNlciBhcyBVc2VyXG4gICAgcGFydGljaXBhbnQgQXBwU2VydmljZSBhc19BcHBTZXJ2aWNlXG4gICAgcGFydGljaXBhbnQgVGFza0V4ZWN1dG9yIGFzX1Rhc2tFeGVjdXRvclxuICAgIHBhcnRpY2lwYW50IEFwYWNoZVRpa2FcbiAgICBwYXJ0aWNpcGFudCBFbWJlZGRpbmdNb2RlbFxuICAgIHBhcnRpY2lwYW50IFBHVmVjdG9yXG4gICAgVXNlci0-PkFwcFNlcnZpY2U6IDEuIFVwbG9hZCBkb2N1bWVudFxuICAgIEFwcFNlcnZpY2UtPj5UYXNrRXhlY3V0b3I6IDIuIENyZWF0ZSBwYXJzaW5nIHRhc2tcbiAgICBUYXNrRXhlY3V0b3ItPj5BcGFjaGVUaWthOiAzLiBFeHRyYWN0IHRleHRcbiAgICBBcGFjaGVUaWthLT4-VGFza0V4ZWN1dG9yOiA0LiBUZXh0IGNvbnRlbnRcbiAgICBUYXNrRXhlY3V0b3ItPj5UYXNrRXhlY3V0b3I6IDUuIFNlbWFudGljIGNodW5raW5nXG4gICAgVGFza0V4ZWN1dG9yLT4-RW1iZWRkaW5nTW9kZWw6IDYuIEdlbmVyYXRlIGVtYmVkZGluZ3NcbiAgICBFbWJlZGRpbmdNb2RlbC0-PlRhc2tFeGVjdXRvcjogNy4gVmVjdG9yc1xuICAgIFRhc2tFeGVjdXRvci0-PlBHVmVjdG9yOiA4LiBTdG9yZSB2ZWN0b3JzXG4gICAgVGFza0V4ZWN1dG9yLT4-QXBwU2VydmljZTogOS4gVXBkYXRlIHRhc2sgc3RhdHVzIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0" alt="文档解析时序图" class="architecture-img">
+                        <p class="note">注：此处应替换为项目实际流程图</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">步骤</h3>
+                    <ol>
+                        <li>用户上传文档</li>
+                        <li>创建异步解析任务</li>
+                        <li>Apache Tika提取文本</li>
+                        <li>语义分块处理</li>
+                        <li>调用Embedding模型生成向量</li>
+                        <li>存储向量到PGVector</li>
+                        <li>更新任务状态</li>
+                    </ol>
+                </section>
+                <section>
+                    <h3 class="blue">技术亮点</h3>
+                    <ul>
+                        <li><span class="highlight">异步任务</span>避免阻塞主流程</li>
+                        <li>支持<span class="highlight">断点续传</span>与重试机制</li>
+                        <li><span class="highlight">向量索引</span>加速语义检索</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第8页：核心功能展示 - 智能体对话 -->
+            <section>
+                <section>
+                    <h2>核心功能展示 - 智能体对话</h2>
+                    <div class="center">
+                        <img src="https://via.placeholder.com/800x500/0078D4/FFFFFF?text=智能体聊天界面截图" alt="智能体聊天界面" class="screenshot">
+                        <p class="note">注：此处应替换为实际界面截图</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">功能特点</h3>
+                    <div class="two-columns">
+                        <div class="col">
+                            <ul>
+                                <li><span class="highlight">流式响应</span>：实时显示AI回复</li>
+                                <li><span class="highlight">工具调用</span>：知识检索、文档解析、计算等</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <ul>
+                                <li><span class="highlight">记忆管理</span>：自动识别并存储关键知识点</li>
+                                <li><span class="highlight">学习任务</span>：创建、跟踪、评估学习目标</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">技术实现</h3>
+                    <ul>
+                        <li>LangChain4j工具调用框架</li>
+                        <li>自定义流式响应处理器</li>
+                        <li>记忆重要性评分算法</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第9页：核心功能展示 - 知识图谱管理 -->
+            <section>
+                <section>
+                    <h2>核心功能展示 - 知识图谱管理</h2>
+                    <div class="center">
+                        <img src="https://via.placeholder.com/800x500/2D2D30/FFFFFF?text=知识图谱可视化界面" alt="知识图谱界面" class="screenshot">
+                        <p class="note">注：此处应替换为实际界面截图</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">功能特点</h3>
+                    <ul>
+                        <li>可视化图谱编辑</li>
+                        <li>拖拽式节点管理</li>
+                        <li>关联资源、记忆、任务</li>
+                        <li>语义检索与推荐</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="blue">技术实现</h3>
+                    <ul>
+                        <li>邻接表存储图结构</li>
+                        <li>图遍历算法实现关系查询</li>
+                        <li>向量检索支持语义关联</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第10页：核心功能展示 - 多格式文档解析 -->
+            <section>
+                <section>
+                    <h2>核心功能展示 - 多格式文档解析</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">支持格式</h3>
+                            <ul>
+                                <li>PDF</li>
+                                <li>DOCX</li>
+                                <li>PPTX</li>
+                                <li>Markdown</li>
+                                <li>HTML</li>
+                                <li>TXT</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">解析流程</h3>
+                            <ol>
+                                <li>格式检测</li>
+                                <li>元数据提取</li>
+                                <li>正文提取</li>
+                                <li>结构化分块</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">技术难点</h3>
+                    <ul>
+                        <li>复杂格式保持结构</li>
+                        <li>大文件内存优化</li>
+                        <li>多语言编码处理</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第11页：性能优化 -->
+            <section>
+                <section>
+                    <h2>性能优化 - 缓存与限流设计</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">缓存策略</h3>
+                            <ul>
+                                <li>Redis缓存热点数据</li>
+                                <li>布隆过滤器防止缓存穿透</li>
+                                <li>多级缓存架构</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">限流设计</h3>
+                            <ul>
+                                <li>令牌桶算法实现API限流</li>
+                                <li>分布式限流确保公平性</li>
+                                <li>用户级配额管理</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">效果对比</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>指标</th>
+                                <th>未优化</th>
+                                <th>优化后</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>QPS</td>
+                                <td>100</td>
+                                <td><span class="highlight">1000</span></td>
+                            </tr>
+                            <tr>
+                                <td>响应时间</td>
+                                <td>5秒</td>
+                                <td><span class="highlight"><1秒</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+
+            <!-- 第12页：系统测试 -->
+            <section>
+                <section>
+                    <h2>系统测试 - 性能与功能验证</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">性能测试</h3>
+                            <ul>
+                                <li>压力测试：1000并发用户，响应时间<1秒</li>
+                                <li>负载测试：持续24小时运行，无内存泄漏</li>
+                                <li>并发测试：多个AI任务并行，资源隔离正常</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">功能测试</h3>
+                            <ul>
+                                <li>单元测试覆盖率：85%</li>
+                                <li>集成测试：所有模块接口验证</li>
+                                <li>端到端测试：用户完整流程验证</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">安全测试</h3>
+                    <ul>
+                        <li>SQL注入防护：100%通过</li>
+                        <li>越权访问：零漏洞</li>
+                        <li>数据加密：传输与存储加密</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第13页：项目演示 -->
+            <section>
+                <section>
+                    <h2>项目演示 - 智能体学习场景</h2>
+                    <div class="center">
+                        <video controls width="80%">
+                            <source src="https://example.com/demo.mp4" type="video/mp4">
+                            您的浏览器不支持视频标签。
+                        </video>
+                        <p class="note">注：此处应替换为实际演示视频</p>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">场景描述</h3>
+                    <ol>
+                        <li>用户上传一篇学术论文</li>
+                        <li>智能体解析论文并提取关键概念</li>
+                        <li>创建知识图谱节点关联概念</li>
+                        <li>用户询问论文相关问题</li>
+                        <li>智能体调用知识检索工具回答</li>
+                        <li>生成学习任务并跟踪进度</li>
+                    </ol>
+                </section>
+                <section>
+                    <h3 class="blue">技术亮点展示</h3>
+                    <div class="two-columns">
+                        <div class="col">
+                            <ul>
+                                <li>流式响应</li>
+                                <li>工具调用</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <ul>
+                                <li>记忆管理</li>
+                                <li>任务跟踪</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- 第14页：项目成果 -->
+            <section>
+                <h2>项目成果 - 关键指标达成</h2>
+                <div class="two-columns">
+                    <div class="col">
+                        <h3 class="blue">代码规模</h3>
+                        <ul>
+                            <li>后端：2.5万行Java代码</li>
+                            <li>前端：1.2万行TypeScript代码</li>
+                            <li>文档：1.5万字技术文档</li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <h3 class="blue">性能指标</h3>
+                        <ul>
+                            <li>平均响应时间：0.8秒</li>
+                            <li>支持并发用户：1000+</li>
+                            <li>文档解析准确率：95%</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="two-columns">
+                    <div class="col">
+                        <h3 class="blue">功能完成</h3>
+                        <ul>
+                            <li>7大核心模块全部实现</li>
+                            <li>20+个REST API接口</li>
+                            <li>10+种文档格式支持</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 第15页：项目创新点 -->
+            <section>
+                <section>
+                    <h2>项目创新点</h2>
+                    <div class="two-columns">
+                        <div class="col">
+                            <h3 class="blue">架构创新</h3>
+                            <ul>
+                                <li>六边形架构在AI项目中的完整实践</li>
+                                <li>业务逻辑与AI技术彻底解耦</li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <h3 class="blue">技术创新</h3>
+                            <ul>
+                                <li>自定义异步任务框架支持长短任务分离</li>
+                                <li>向量检索与关系检索融合</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3 class="blue">应用创新</h3>
+                    <ul>
+                        <li>智能体驱动的学习伴侣模式</li>
+                        <li>记忆强化与学习任务闭环</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第16页：不足与改进方向 -->
+            <section>
+                <h2>不足与改进方向</h2>
+                <div class="two-columns">
+                    <div class="col">
+                        <h3 class="blue">已知不足</h3>
+                        <ol>
+                            <li>移动端适配尚未完成</li>
+                            <li>语音交互功能待开发</li>
+                            <li>多模型动态切换机制待优化</li>
+                        </ol>
+                    </div>
+                    <div class="col">
+                        <h3 class="blue">改进方向</h3>
+                        <ol>
+                            <li>开发移动端App（React Native）</li>
+                            <li>集成TTS/STT实现语音交互</li>
+                            <li>实现模型性能监控与自动切换</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 第17页：总结 -->
+            <section>
+                <section>
+                    <h2>总结 - 项目价值与展望</h2>
+                    <h3 class="blue">项目价值</h3>
+                    <ul>
+                        <li>为学习者提供智能化学习伴侣</li>
+                        <li>为开发者展示现代化企业级架构实践</li>
+                        <li>验证AI与传统架构融合的可行路径</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3 class="blue">未来展望</h3>
+                    <ul>
+                        <li>开源项目，贡献社区</li>
+                        <li>扩展更多AI能力（图像识别、语音处理）</li>
+                        <li>企业级部署与商业化探索</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- 第18页：Q&A -->
+            <section>
+                <h2>Q&A - 常见问题准备</h2>
+                <div class="two-columns">
+                    <div class="col">
+                        <h3 class="blue">技术问题</h3>
+                        <ul>
+                            <li>六边形架构 vs 传统分层架构优势？</li>
+                            <li>如何保证向量检索的准确性？</li>
+                            <li>异步任务框架如何保证可靠性？</li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <h3 class="blue">业务问题</h3>
+                        <ul>
+                            <li>与现有学习平台相比优势？</li>
+                            <li>如何保护用户数据隐私？</li>
+                            <li>商业模式是什么？</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer">感谢聆听！</div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            plugins: [RevealHighlight],
+            transition: 'convex',
+            backgroundTransition: 'zoom',
+            pdfSeparateFragments: false
+        });
+    </script>
+</body>
+</html>
